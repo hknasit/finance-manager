@@ -1,51 +1,35 @@
 // components/LogoutButton.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { useState } from "react";
+import { LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface LogoutButtonProps {
   className?: string;
-  variant?: 'default' | 'minimal';
+  variant?: "default" | "minimal";
 }
 
-export default function LogoutButton({ className = '', variant = 'default' }: LogoutButtonProps) {
-  const router = useRouter();
+export default function LogoutButton({
+  className = "",
+  variant = "default",
+}: LogoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
     try {
       setIsLoading(true);
-      
-      const res = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
 
-      if (!res.ok) {
-        throw new Error('Logout failed');
-      }
-
-      // Clear any client-side auth state
-      localStorage.removeItem('isLoggedIn');
-      
-      // Redirect to login page
-      router.push('/login');
-      
-      // Force a page refresh to clear any remaining state
-      window.location.href = '/login';
-      
+      logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (variant === 'minimal') {
+  if (variant === "minimal") {
     return (
       <button
         onClick={handleLogout}

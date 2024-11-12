@@ -3,11 +3,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
-  const router = useRouter();
+  // const router = useRouter();
+  const { login } = useAuth();
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
@@ -31,27 +33,8 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-        credentials: "include", // Important for cookies
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to login");
-      }
-
-      // Set any necessary client-side state here
-      localStorage.setItem("isLoggedIn", "true");
-
-      // Redirect with router.push
-      await router.push("/dashboard");
-
-      // Force a page refresh to ensure all auth states are updated
-      window.location.href = "/dashboard";
+      login(formData.email, formData.password);
+      setIsLoading(false);
     } catch (err: any) {
       setError(err.message);
       setIsLoading(false);

@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 //import { jwtVerify } from 'jose'; // More reliable than jsonwebtoken in edge runtime
 
 export async function middleware(request: NextRequest) {
-  const token = request.cookies.get("token");
+  const token = request.cookies.get("auth-token");
 
   // Paths that don't require authentication
   const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password"];
