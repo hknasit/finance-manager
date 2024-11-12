@@ -7,7 +7,8 @@ import ExcelJS from "exceljs";
 import path from "path";
 import fs from "fs";
 import { z } from "zod";
-import { TransactionService } from "@/lib/services/transaction.service";
+import { GoogleSheetsService } from "@/lib/googleSheets";
+import User from "@/models/user.model";
 
 // Transaction validation schema
 const TransactionSchema = z.object({
@@ -85,6 +86,25 @@ export async function POST(req: Request) {
     });
 
     await newTransaction.save();
+
+    // Get or create Google Sheet
+    const sheetsService = new GoogleSheetsService();
+    const user = await User.findById(userId);
+
+    if (!user.spreadsheetId) {
+      // Create new spreadsheet if user doesn't have one
+      const spreadsheetId = await sheetsService.createNewSpreadsheet(userId);
+      const spreadsheetUrl = await sheetsService.getSpreadsheetUrl(
+        spreadsheetId
+      );
+
+      user.spreadsheetId = spreadsheetId;
+      user.spreadsheetUrl = spreadsheetUrl;
+      await user.save();
+    }
+
+    // Add transaction to Google Sheet
+    await sheetsService.addTransaction(user.spreadsheetId, transaction);
 
     // Get or create Excel workbook
     const workbook = await getOrCreateWorkbook(userId);

@@ -151,6 +151,8 @@ export default function TransactionInput() {
       handleClear();
       setDescription("");
       // Show success message or redirect
+      console.log("Google sheet update")
+
     } catch (err) {
       setError(err.message);
       console.error("Transaction error:", err);

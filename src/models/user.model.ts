@@ -1,23 +1,23 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Name is required'],
+    required: [true, "Name is required"],
     trim: true,
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: [true, "Email is required"],
     unique: true,
     trim: true,
     lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email'],
+    match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
-    minlength: [8, 'Password must be at least 8 characters long'],
+    required: [true, "Password is required"],
+    minlength: [8, "Password must be at least 8 characters long"],
   },
   image: {
     type: String,
@@ -28,9 +28,11 @@ const userSchema = new mongoose.Schema({
   },
   resetToken: String,
   resetTokenExpiry: Date,
+  spreadsheetId: String,
+  spreadsheetUrl: String,
 });
 
 // Prevent mongoose from creating plural form of model name
-const User = mongoose.models.User || mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;
