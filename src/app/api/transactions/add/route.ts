@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   try {
     // Verify authentication first
     const authPayload = await verifyAuth();
-    const userId: string = authPayload.userId as string;
+    const userId: string = authPayload.id as string;
 
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -106,34 +106,34 @@ export async function POST(req: Request) {
     // Add transaction to Google Sheet
     await sheetsService.addTransaction(user.spreadsheetId, transaction);
 
-    // Get or create Excel workbook
-    const workbook = await getOrCreateWorkbook(userId);
+    // // Get or create Excel workbook
+    // const workbook = await getOrCreateWorkbook(userId);
 
-    // Get the correct month sheet
-    const transactionDate = new Date(transaction.date);
-    const monthName = transactionDate.toLocaleString("default", {
-      month: "long",
-    });
-    const monthSheet = workbook.getWorksheet(monthName);
+    // // Get the correct month sheet
+    // const transactionDate = new Date(transaction.date);
+    // const monthName = transactionDate.toLocaleString("default", {
+    //   month: "long",
+    // });
+    // const monthSheet = workbook.getWorksheet(monthName);
 
-    if (!monthSheet) {
-      return NextResponse.json(
-        { message: "Invalid worksheet" },
-        { status: 400 }
-      );
-    }
+    // if (!monthSheet) {
+    //   return NextResponse.json(
+    //     { message: "Invalid worksheet" },
+    //     { status: 400 }
+    //   );
+    // }
 
-    // Use the new function to add transaction
-    await addTransactionToSheet(monthSheet, transaction);
+    // // Use the new function to add transaction
+    // await addTransactionToSheet(monthSheet, transaction);
 
-    // Save Excel file
-    const filePath = path.join(
-      process.cwd(),
-      "data",
-      "users",
-      `${userId}.xlsx`
-    );
-    await workbook.xlsx.writeFile(filePath);
+    // // Save Excel file
+    // const filePath = path.join(
+    //   process.cwd(),
+    //   "data",
+    //   "users",
+    //   `${userId}.xlsx`
+    // );
+    // await workbook.xlsx.writeFile(filePath);
 
     return NextResponse.json({
       message: "Transaction saved successfully",

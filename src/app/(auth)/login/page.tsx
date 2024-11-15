@@ -2,15 +2,15 @@
 // app/(auth)/login/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+// import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   // const router = useRouter();
   const { login } = useAuth();
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -18,14 +18,14 @@ export default function LoginPage() {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  // const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Show success message if redirected from registration
-  useEffect(() => {
-    if (searchParams?.get("registered") === "true") {
-      setShowSuccessMessage(true);
-    }
-  }, [searchParams]);
+  // useEffect(() => {
+  //   if (searchParams?.get("registered") === "true") {
+  //     setShowSuccessMessage(true);
+  //   }
+  // }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +34,10 @@ export default function LoginPage() {
 
     try {
       login(formData.email, formData.password);
-      setIsLoading(false);
     } catch (err: any) {
       setError(err.message);
+      setIsLoading(false);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -44,7 +45,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-        {showSuccessMessage && (
+        {/* {showSuccessMessage && (
           <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded mb-4">
             <div className="flex">
               <div className="ml-3">
@@ -54,7 +55,7 @@ export default function LoginPage() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         <div>
           <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">

@@ -1,0 +1,5 @@
+{
+    "rewrites": [
+      { "source": "/projects/mymoney/:path*", "destination": "/:path*" }
+    ]
+  }

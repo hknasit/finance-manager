@@ -137,7 +137,7 @@ export default function TransactionInput() {
         date: new Date().toISOString(),
       };
 
-      const response = await fetch("/api/transactions/add", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transactionData),

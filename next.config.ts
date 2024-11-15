@@ -1,7 +1,44 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import type { Configuration as WebpackConfig } from "webpack";
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
+const config: NextConfig = {
+  basePath: "/projects/mymoney",
+
+  assetPrefix: "/projects/mymoney",
+
+  trailingSlash: true,
+
+  images: {
+    domains: ["api.placeholder.com"],
+    path: "/projects/mymoney/_next/image",
+  },
+
+  env: {
+    NEXT_PUBLIC_BASE_PATH: "/projects/mymoney",
+  },
+
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/projects/mymoney",
+        basePath: false,
+        permanent: true,
+      },
+    ];
+  },
+
+  webpack: (
+    config: WebpackConfig,
+    { isServer }: { isServer: boolean }
+  ): WebpackConfig => {
+    // Add any custom webpack configs here
+    return config;
+  },
+
+  // Output configuration for better optimization
+  output: "standalone",
 };
 
-export default nextConfig;
+export default config;

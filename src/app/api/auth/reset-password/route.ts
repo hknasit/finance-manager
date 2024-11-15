@@ -1,49 +1,52 @@
-import { NextResponse } from 'next/server';
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
-import { connectDB } from '@/lib/db';
-import User from '@/models/user.model';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NextRequest, NextResponse } from "next/server";
+import { connectDB } from "@/lib/db";
+import  User  from "@/models/user.model";
+import bcrypt from "bcryptjs";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { token, password } = await request.json();
-
     await connectDB();
 
-    // Hash the token from the URL to compare with stored token
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex');
+    const { token, password } = await request.json();
+
+    if (!token || !password) {
+      return NextResponse.json(
+        { message: "Token and password are required" },
+        { status: 400 }
+      );
+    }
 
     // Find user with valid reset token
     const user = await User.findOne({
-      resetToken: hashedToken,
+      resetToken: token,
       resetTokenExpiry: { $gt: Date.now() },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid or expired reset token' },
+        { message: "Invalid or expired reset token" },
         { status: 400 }
       );
     }
 
-    // Update password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Update user password and clear reset token
     user.password = hashedPassword;
     user.resetToken = undefined;
     user.resetTokenExpiry = undefined;
     await user.save();
 
     return NextResponse.json(
-      { message: 'Password has been reset successfully' },
+      { message: "Password reset successful" },
       { status: 200 }
     );
-  } catch (error) {
-    console.error('Reset password error:', error);
+  } catch (error: any) {
+    console.error("Reset password error:", error);
     return NextResponse.json(
-      { error: 'Failed to reset password' },
+      { message: "Failed to reset password" },
       { status: 500 }
     );
   }

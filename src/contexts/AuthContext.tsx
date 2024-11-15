@@ -1,62 +1,124 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// context/AuthContext.tsx
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+
+interface User {
+  username: string;
+  userId: string;
+  exp: number;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
+  user: null,
   login: async () => {},
   logout: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Check authentication status on mount
     checkAuth();
   }, []);
 
-  const checkAuth = async () => {
+  const getCookie = (name: string): string | null => {
+    return document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(name + '='))
+    ?.split('=')[1] || null;
+  };
+
+  const checkAuth = () => {
     try {
-      const response = await fetch("/api/auth/verify");
-      setIsAuthenticated(response.ok);
+      const token = getCookie("auth-token");
+      console.log("Checking auth token:", token); // Debug log
+      if (!token) {
+        handleLogout();
+        return;
+      }
+
+      // Use jwtDecode instead of verify on client side
+      const decoded = jwtDecode<User>(token);
+
+      // Check if token is expired
+      const currentTime = Date.now() / 1000;
+      if (decoded.exp < currentTime) {
+        handleLogout();
+        return;
+      }
+
+      setUser(decoded);
+      setIsAuthenticated(true);
     } catch (error) {
-      setIsAuthenticated(false);
+      console.error("Auth check failed:", error);
+      handleLogout();
     }
   };
 
   const login = async (email: string, password: string) => {
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Important for cookie handling
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!response.ok) {
-      throw new Error("Login failed");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Login failed");
+      }
+
+      const data = await response.json();
+
+      // The token should be set as a cookie by the server
+      // We just need to decode it here to get the user info
+      const decoded = jwtDecode<User>(data.token);
+      setUser(decoded);
+      setIsAuthenticated(true);
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
     }
-    setIsAuthenticated(true);
-    router.push("/dashboard");
+  };
+
+  const handleLogout = () => {
+    // Clear the cookie with the same path and domain as it was set
+    document.cookie =
+      "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    setUser(null);
+    setIsAuthenticated(false);
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setIsAuthenticated(false);
-    router.push("/login");
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+      handleLogout();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      handleLogout();
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

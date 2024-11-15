@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { cookies } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
+import User from "@/models/user.model";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
