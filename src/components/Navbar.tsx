@@ -69,11 +69,11 @@ export default function Navbar() {
             {/* Logo and Brand - Simplified for mobile */}
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">F</span>
+                <span className="text-white font-bold text-xl">$</span>
               </div>
               <span className="text-lg md:text-xl font-semibold text-gray-900">
-                Finance
-                <span className="hidden sm:inline"> Manager</span>
+                My 
+                <span className="hidden sm:inline"> Money</span>
               </span>
             </Link>
 
