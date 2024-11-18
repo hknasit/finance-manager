@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 
 const BASE_PATH = '/projects/mymoney';
 const PUBLIC_PATHS = [
-  `${BASE_PATH}/login`,
-  `${BASE_PATH}/register`,
-  `${BASE_PATH}/forgot-password`,
-  `${BASE_PATH}/reset-password`,
+  `/login`,
+  `/register`,
+  `/forgot-password`,
+  `/reset-password`,
 ];
 
 const isPublicPath = (pathname) => {
@@ -19,17 +19,15 @@ const isSafeReturnUrl = (url) => {
          !url.startsWith('/_next/');
 };
 
-export async function middleware(request) {
-  const pathname = request.nextUrl.pathname;
+export function middleware(request) {
+  const { pathname } = request.nextUrl;
+  // Remove trailing slash for consistent comparison
+  const normalizedPath = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
   
-  if (!pathname.startsWith(BASE_PATH)) {
-    return NextResponse.next();
-  }
-
   const token = request.cookies.get("auth-token");
   const isValidToken = token?.value && token.value.length > 0;
 
-  if (isPublicPath(pathname)) {
+  if (isPublicPath(normalizedPath)) {
     if (isValidToken) {
       return NextResponse.redirect(new URL(`${BASE_PATH}/dashboard`, request.url));
     }
@@ -37,9 +35,9 @@ export async function middleware(request) {
   }
 
   if (!isValidToken) {
-    const returnUrl = request.nextUrl.pathname.slice(BASE_PATH.length);
+    const returnUrl = normalizedPath.slice(BASE_PATH.length);
     const loginUrl = new URL(`${BASE_PATH}/login`, request.url);
-
+    
     if (isSafeReturnUrl(returnUrl)) {
       loginUrl.searchParams.set("from", returnUrl);
     }
@@ -47,7 +45,8 @@ export async function middleware(request) {
   }
 
   const response = NextResponse.next();
-
+  
+  // Security headers
   const headers = {
     'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff',
@@ -64,8 +63,11 @@ export async function middleware(request) {
   return response;
 }
 
-export const config = {
+// Update matcher to be more specific about which paths to include/exclude
+export const config = { 
   matcher: [
-    '/projects/mymoney((?!api|_next|_static|.*\\..*$).*)',
-  ],
+    // Match all paths under /projects/mymoney except static files and API routes
+    '/projects/mymoney/((?!api|_next|_static|.*\\..*).*)',
+    '/((?!api|_next|_static|.*\\..*).*)',
+  ]
 };

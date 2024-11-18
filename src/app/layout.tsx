@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "My Money",
   description:
     "My Money is a personal finance management web application that helps users manage their finances.",
-    
+  
 };
 
 export default function RootLayout({
@@ -27,8 +27,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-  
   return (
     <html lang="en">
       <body

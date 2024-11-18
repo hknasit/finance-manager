@@ -22,8 +22,7 @@ const config: NextConfig = {
     return [
       {
         source: "/",
-        destination: "/projects/mymoney",
-        basePath: false,
+        destination: "/dashboard",
         permanent: true,
       },
     ];
