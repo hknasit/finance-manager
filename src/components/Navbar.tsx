@@ -72,8 +72,7 @@ export default function Navbar() {
                 <span className="text-white font-bold text-xl">$</span>
               </div>
               <span className="text-lg md:text-xl font-semibold text-gray-900">
-                My 
-                <span className="hidden sm:inline"> Money</span>
+                My Money
               </span>
             </Link>
 
@@ -111,17 +110,20 @@ export default function Navbar() {
                           </span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-slate-700">
+                          <span className="text-sm font-medium text-slate-600">
                             {user?.username || "User"}
                           </span>
                         </div>
                       </div>
+
                       <button
-                        onClick={logout}
-                        className="p-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
                         title="Sign out"
+                        onClick={logout}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2
+                          hover:bg-slate-50 transition-colors text-slate-600`}
                       >
                         <LogOut className="h-4 w-4" />
+                        Logout
                       </button>
                     </div>
                   </div>

@@ -45,10 +45,11 @@ export async function verifyAuth() {
 
 // Middleware to protect API routes
 export async function withAuth(handler: Function) {
-  return async (req: Request) => {
+  return async (req: Request, context?: any) => {
     try {
       const payload = await verifyAuth();
-      return handler(req, payload);
+      // Pass both request and context to the handler
+      return handler(req, payload, context);
     } catch (error) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,

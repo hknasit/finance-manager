@@ -1,5 +1,37 @@
 import mongoose from "mongoose";
 
+export type CategoryType = "income" | "expense";
+
+export interface Category {
+  _id?: string;
+  name: string;
+  type: "income" | "expense";
+}
+
+// Define default categories that will be added for new users
+export const DEFAULT_CATEGORIES: Category[] = [
+  { name: "Salary", type: "income" },
+  { name: "Part-time", type: "income" },
+  { name: "Credit Bill", type: "expense" },
+  { name: "Donation", type: "expense" },
+  { name: "Rent", type: "expense" },
+  { name: "Food", type: "expense" },
+  { name: "Miscellaneous", type: "expense" },
+];
+
+const categorySchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  type: {
+    type: String,
+    enum: ["income", "expense"],
+    required: true,
+  },
+});
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -19,8 +51,9 @@ const userSchema = new mongoose.Schema({
     required: [true, "Password is required"],
     minlength: [8, "Password must be at least 8 characters long"],
   },
-  image: {
-    type: String,
+  categories: {
+    type: [categorySchema],
+    default: DEFAULT_CATEGORIES,
   },
   createdAt: {
     type: Date,

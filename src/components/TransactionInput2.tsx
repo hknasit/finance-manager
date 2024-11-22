@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { CreditCard, Wallet, X, Check, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import DatePicker from "./DatePicker";
-
-const categories = {
-  income: ["Salary", "Part-time", "Other Income"],
-  expense: ["Credit Bill", "Donation", "Rent", "Food", "Miscellaneous"],
-};
+import { Plus } from "lucide-react";
+import { AddCategoryModal } from "./Category/AddCategoryModal";
+import { useCategories } from "@/contexts/CategoryContext";
+import { CategoryItem } from "./Category/CategoryItem";
+import { EditCategoryModal } from "./Category/EditCategoryModal";
+import { DeleteCategoryModal } from "./Category/DeleteCategoryModal";
 
 interface CalculatorState {
   currentValue: string;
@@ -18,7 +19,7 @@ interface CalculatorState {
 export default function TransactionInput() {
   const { isAuthenticated } = useAuth();
   const [description, setDescription] = useState("");
-  const [type, setType] = useState("expense");
+  const [type, setType] = useState<"income" | "expense">("expense");
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [category, setCategory] = useState("Food");
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,20 @@ export default function TransactionInput() {
   const [showCategories, setShowCategories] = useState(false);
   const [transactionDate, setTransactionDate] = useState(new Date());
   const categoryRef = useRef<HTMLDivElement>(null);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const { categories } = useCategories();
+  const [editCategory, setEditCategory] = useState(null);
+  const [deleteCategory, setDeleteCategory] = useState(null);
+
+  const filteredCategory = categories.filter((cat) => cat.type === type);
+
+  const handleTypeChange = (newType: "income" | "expense") => {
+    setType(newType);
+    const categoryForType = categories.find((cat) => cat.type === newType);
+    if (categoryForType) {
+      setCategory(categoryForType.name);
+    }
+  };
 
   const [calc, setCalc] = useState<CalculatorState>({
     currentValue: "0",
@@ -118,11 +133,6 @@ export default function TransactionInput() {
     });
   };
 
-  const handleTypeChange = (newType: "income" | "expense") => {
-    setType(newType);
-    setCategory(categories[newType][0]);
-  };
-
   const handleSave = async () => {
     try {
       if (!isAuthenticated) throw new Error("Please login to add transactions");
@@ -144,11 +154,14 @@ export default function TransactionInput() {
         date: transactionDate.toISOString(),
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/add`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(transactionData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/add`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(transactionData),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -164,7 +177,6 @@ export default function TransactionInput() {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-slate-100 md:bg-white md:min-h-[calc(100vh-4rem)] w-full flex items-start justify-center">
       <div className="w-full md:max-w-sm bg-white md:my-4 md:rounded-3xl md:shadow-lg">
@@ -214,7 +226,7 @@ export default function TransactionInput() {
           </div>
 
           {/* Payment Method and Category */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1  gap-3 mb-4">
             <div className="">
               <div className="text-slate-700 font-medium text-sm mb-2">
                 Payment Method
@@ -247,10 +259,11 @@ export default function TransactionInput() {
               </div>
             </div>
 
-            <div className="relative xl:mx-2" ref={categoryRef}>
+            <div className="relative " ref={categoryRef}>
               <div className="text-slate-700 font-medium text-sm mb-2">
                 Category
               </div>
+
               <button
                 className="w-full flex items-center justify-between p-3 border border-slate-200 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-colors text-slate-700"
                 onClick={() => setShowCategories(!showCategories)}
@@ -262,18 +275,57 @@ export default function TransactionInput() {
 
               {showCategories && (
                 <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-                  {categories[type].map((cat) => (
-                    <button
-                      key={cat}
-                      className="w-full text-left px-4 py-3 text-slate-700 hover:bg-slate-50 transition-colors"
-                      onClick={() => {
-                        setCategory(cat);
-                        setShowCategories(false);
+                  <div className="max-h-64 overflow-y-auto">
+                    {filteredCategory.map((cat) => (
+                      <CategoryItem
+                        key={cat._id}
+                        category={cat}
+                        onSelect={() => {
+                          setCategory(cat.name);
+                          setShowCategories(false);
+                        }}
+                        onEdit={() => setEditCategory(cat)}
+                        onDelete={() => setDeleteCategory(cat)}
+                        isSelected={category === cat.name}
+                      />
+                    ))}
+
+                    {/* Modals */}
+                    <AddCategoryModal
+                      isOpen={showAddCategory}
+                      onClose={() => setShowAddCategory(false)}
+                      defaultType={type}
+                    />
+
+                    <EditCategoryModal
+                      isOpen={!!editCategory}
+                      onClose={() => {
+                        setEditCategory(null);
                       }}
+                      category={editCategory}
+                    />
+
+                    <DeleteCategoryModal
+                      isOpen={!!deleteCategory}
+                      onClose={() => setDeleteCategory(null)}
+                      category={deleteCategory}
+                    />
+                  </div>
+
+                  {/* Add Category Button */}
+                  <div className="border-t border-slate-200">
+                    <button
+                      onClick={() => {
+                        setShowCategories(false);
+                        setShowAddCategory(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-green-600 hover:bg-green-50 transition-colors"
+                      type="button"
                     >
-                      {cat}
+                      <Plus size={18} />
+                      <span className="font-medium">Add New Category</span>
                     </button>
-                  ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -346,7 +398,32 @@ export default function TransactionInput() {
             ))}
           </div>
         </div>
+        <div className=" z-10 bg-white px-4 py-3 flex justify-between items-center border-b border-slate-200 md:border-none">
+          <button
+            onClick={() => clearInput()}
+            disabled={loading}
+            className="text-green-600 font-medium flex items-center gap-1 p-2 hover:bg-green-50 rounded-lg"
+          >
+            <X size={20} />
+            <span className="text-sm">CLEAR</span>
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="text-green-600 font-medium flex items-center gap-1 p-2 hover:bg-green-50 rounded-lg"
+          >
+            <Check size={20} />
+            <span className="text-sm">{loading ? "SAVING..." : "SAVE"}</span>
+          </button>
+        </div>
       </div>
+
+      <AddCategoryModal
+        isOpen={showAddCategory}
+        onClose={() => setShowAddCategory(false)}
+        defaultType={type}
+      />
+      
     </div>
   );
 }
