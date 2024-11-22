@@ -88,23 +88,22 @@ export async function POST(req: Request) {
     await newTransaction.save();
 
     // Get or create Google Sheet
-    const sheetsService = new GoogleSheetsService();
-    const user = await User.findById(userId);
+    // const sheetsService = new GoogleSheetsService();
+    // const user = await User.findById(userId);
 
-    if (!user.spreadsheetId) {
-      // Create new spreadsheet if user doesn't have one
-      const spreadsheetId = await sheetsService.createNewSpreadsheet(userId);
-      const spreadsheetUrl = await sheetsService.getSpreadsheetUrl(
-        spreadsheetId
-      );
+    // if (!user.spreadsheetId) {
+    //   // Create new spreadsheet if user doesn't have one
+    //   const spreadsheetId = await sheetsService.createNewSpreadsheet(userId);
+    //   const spreadsheetUrl = await sheetsService.getSpreadsheetUrl(
+    //     spreadsheetId
+    //   );
 
-      user.spreadsheetId = spreadsheetId;
-      user.spreadsheetUrl = spreadsheetUrl;
-      await user.save();
-    }
-
-    // Add transaction to Google Sheet
-    await sheetsService.addTransaction(user.spreadsheetId, transaction);
+    //   user.spreadsheetId = spreadsheetId;
+    //   user.spreadsheetUrl = spreadsheetUrl;
+    //   await user.save();
+    // }
+    // await sheetsService.addTransaction(user.spreadsheetId, transaction);
+    
 
     // // Get or create Excel workbook
     // const workbook = await getOrCreateWorkbook(userId);
