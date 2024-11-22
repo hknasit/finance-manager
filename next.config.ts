@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { Configuration as WebpackConfig } from "webpack";
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
@@ -24,23 +23,12 @@ const config: NextConfig = {
         source: "/",
         destination: "/dashboard",
         permanent: true,
-        
       },
     ];
   },
 
-  webpack: (
-    config: WebpackConfig,
-    { isServer }: { isServer: boolean }
-  ): WebpackConfig => {
-    // Add any custom webpack configs here
-    return config;
-  },
-
   // Output configuration for better optimization
   output: "standalone",
-
-  skipTrailingSlashRedirect: true,
 };
 
 export default config;

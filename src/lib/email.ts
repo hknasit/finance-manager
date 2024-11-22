@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -11,12 +11,12 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendResetEmail(email: string, token: string) {
-  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${token}`;
+  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_BASE_PATH}/reset-password/${token}`;
 
   await transporter.sendMail({
     from: process.env.SMTP_FROM,
     to: email,
-    subject: 'Password Reset Request',
+    subject: "Password Reset Request",
     html: `
       <h1>Password Reset</h1>
       <p>Click the link below to reset your password:</p>

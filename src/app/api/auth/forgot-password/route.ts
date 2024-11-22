@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import crypto from 'crypto';
-import nodemailer from 'nodemailer';
-import { connectDB } from '@/lib/db';
-import User from '@/models/user.model';
+import { NextResponse } from "next/server";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
+import { connectDB } from "@/lib/db";
+import User from "@/models/user.model";
 
 // Create Nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -25,17 +25,20 @@ export async function POST(request: Request) {
     // Don't reveal if user exists or not
     if (!user) {
       return NextResponse.json(
-        { message: 'If an account exists, a password reset link will be sent to your email.' },
+        {
+          message:
+            "If an account exists, a password reset link will be sent to your email.",
+        },
         { status: 200 }
       );
     }
 
     // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetToken = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(resetToken)
-      .digest('hex');
+      .digest("hex");
 
     // Save hashed token to database
     user.resetToken = hashedToken;
@@ -43,13 +46,13 @@ export async function POST(request: Request) {
     await user.save();
 
     // Create reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_BASE_PATH}/reset-password/${resetToken}`;
 
     // Send email
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to: email,
-      subject: 'Password Reset Request',
+      subject: "Password Reset Request",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
           <h2>Reset Your Password</h2>
@@ -62,13 +65,16 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: 'If an account exists, a password reset link will be sent to your email.' },
+      {
+        message:
+          "If an account exists, a password reset link will be sent to your email.",
+      },
       { status: 200 }
     );
   } catch (error) {
-    console.error('Password reset error:', error);
+    console.error("Password reset error:", error);
     return NextResponse.json(
-      { error: 'Failed to process password reset request' },
+      { error: "Failed to process password reset request" },
       { status: 500 }
     );
   }
