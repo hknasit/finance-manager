@@ -40,7 +40,7 @@ const config: NextConfig = {
   // Output configuration for better optimization
   output: "standalone",
 
-  skipTrailingSlashRedirect: false,
+  skipTrailingSlashRedirect: true,
 };
 
 export default config;

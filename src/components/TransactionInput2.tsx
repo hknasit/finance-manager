@@ -22,32 +22,41 @@ export default function TransactionInput() {
   const [description, setDescription] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [paymentMethod, setPaymentMethod] = useState("card");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showCategories, setShowCategories] = useState(false);
   const [transactionDate, setTransactionDate] = useState(new Date());
   const categoryRef = useRef<HTMLDivElement>(null);
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const { categories } = useCategories();
-  const [category, setCategory] = useState(
-    type === "expense"
-      ? categories.expense[0]?.name || ""
-      : categories.income[0]?.name || ""
-  );
+  const { categories,  } = useCategories();
+  const [loading, setLoading] = useState(false);
+
+  const [category, setCategory] = useState("");
+
+  // Update category whenever categories or type changes
+  useEffect(() => {
+    const categoryList =
+      type === "expense" ? categories.expense : categories.income;
+    if (categoryList.length > 0 && !category) {
+      setCategory(categoryList[0].name);
+    }
+  }, [categories, type, category]);
+
+  const handleTypeChange = (newType: "income" | "expense") => {
+    setType(newType);
+    const categoryList =
+      newType === "expense" ? categories.expense : categories.income;
+    if (categoryList.length > 0) {
+      setCategory(categoryList[0].name);
+    } else {
+      setCategory("");
+    }
+  };
+
   const [editCategory, setEditCategory] = useState(null);
   const [deleteCategory, setDeleteCategory] = useState(null);
 
   const filteredCategory =
     type === "expense" ? categories.expense : categories.income;
-
-  const handleTypeChange = (newType: "income" | "expense") => {
-    setType(newType);
-    const categoryForType =
-      type === "expense" ? categories.expense : categories.income;
-    if (categoryForType) {
-      setCategory(categoryForType[0]?.name);
-    }
-  };
 
   const [calc, setCalc] = useState<CalculatorState>({
     currentValue: "0",
