@@ -8,6 +8,7 @@ import { useCategories } from "@/contexts/CategoryContext";
 import { CategoryItem } from "./Category/CategoryItem";
 import { EditCategoryModal } from "./Category/EditCategoryModal";
 import { DeleteCategoryModal } from "./Category/DeleteCategoryModal";
+import Calculator from "./Calculator/Calculator";
 
 interface CalculatorState {
   currentValue: string;
@@ -21,7 +22,6 @@ export default function TransactionInput() {
   const [description, setDescription] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [paymentMethod, setPaymentMethod] = useState("card");
-  const [category, setCategory] = useState("Food");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showCategories, setShowCategories] = useState(false);
@@ -29,16 +29,23 @@ export default function TransactionInput() {
   const categoryRef = useRef<HTMLDivElement>(null);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const { categories } = useCategories();
+  const [category, setCategory] = useState(
+    type === "expense"
+      ? categories.expense[0]?.name || ""
+      : categories.income[0]?.name || ""
+  );
   const [editCategory, setEditCategory] = useState(null);
   const [deleteCategory, setDeleteCategory] = useState(null);
 
-  const filteredCategory = categories.filter((cat) => cat.type === type);
+  const filteredCategory =
+    type === "expense" ? categories.expense : categories.income;
 
   const handleTypeChange = (newType: "income" | "expense") => {
     setType(newType);
-    const categoryForType = categories.find((cat) => cat.type === newType);
+    const categoryForType =
+      type === "expense" ? categories.expense : categories.income;
     if (categoryForType) {
-      setCategory(categoryForType.name);
+      setCategory(categoryForType[0]?.name);
     }
   };
 
@@ -183,12 +190,12 @@ export default function TransactionInput() {
         {/* Fixed Header */}
         <div className="sticky top-0 z-10 bg-white px-4 py-3 flex justify-between items-center border-b border-slate-200 md:border-none">
           <button
-            onClick={() => window.history.back()}
+            onClick={() => handleClear()}
             disabled={loading}
             className="text-green-600 font-medium flex items-center gap-1 p-2 hover:bg-green-50 rounded-lg"
           >
             <X size={20} />
-            <span className="text-sm">CANCEL</span>
+            <span className="text-sm">CLEAR</span>
           </button>
           <button
             onClick={handleSave}
@@ -289,27 +296,6 @@ export default function TransactionInput() {
                         isSelected={category === cat.name}
                       />
                     ))}
-
-                    {/* Modals */}
-                    <AddCategoryModal
-                      isOpen={showAddCategory}
-                      onClose={() => setShowAddCategory(false)}
-                      defaultType={type}
-                    />
-
-                    <EditCategoryModal
-                      isOpen={!!editCategory}
-                      onClose={() => {
-                        setEditCategory(null);
-                      }}
-                      category={editCategory}
-                    />
-
-                    <DeleteCategoryModal
-                      isOpen={!!deleteCategory}
-                      onClose={() => setDeleteCategory(null)}
-                      category={deleteCategory}
-                    />
                   </div>
 
                   {/* Add Category Button */}
@@ -361,46 +347,16 @@ export default function TransactionInput() {
           </div>
 
           {/* Keypad - Higher contrast keys */}
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              "+",
-              "7",
-              "8",
-              "9",
-              "-",
-              "4",
-              "5",
-              "6",
-              "×",
-              "1",
-              "2",
-              "3",
-              "÷",
-              "0",
-              ".",
-              "=",
-            ].map((key) => (
-              <button
-                key={key}
-                onClick={() => {
-                  if (["+", "-", "×", "÷"].includes(key)) handleOperation(key);
-                  else if (key === "=") handleEquals();
-                  else handleNumber(key);
-                }}
-                className={`p-4 md:p-5 text-lg rounded-xl transition-colors font-medium ${
-                  ["+", "-", "×", "÷", "="].includes(key)
-                    ? "bg-green-600 text-white hover:bg-green-700 active:bg-green-800"
-                    : "bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300"
-                }`}
-              >
-                {key}
-              </button>
-            ))}
-          </div>
+          <Calculator
+            handleEquals={handleEquals}
+            handleNumber={handleNumber}
+            handleOperation={handleOperation}
+          />
         </div>
+        {/* Footer */}
         <div className=" z-10 bg-white px-4 py-3 flex justify-between items-center border-b border-slate-200 md:border-none">
           <button
-            onClick={() => clearInput()}
+            onClick={() => handleClear()}
             disabled={loading}
             className="text-green-600 font-medium flex items-center gap-1 p-2 hover:bg-green-50 rounded-lg"
           >
@@ -417,13 +373,26 @@ export default function TransactionInput() {
           </button>
         </div>
       </div>
-
+      {/* Modals */}
       <AddCategoryModal
         isOpen={showAddCategory}
         onClose={() => setShowAddCategory(false)}
         defaultType={type}
       />
-      
+
+      <EditCategoryModal
+        isOpen={!!editCategory}
+        onClose={() => {
+          setEditCategory(null);
+        }}
+        category={editCategory}
+      />
+
+      <DeleteCategoryModal
+        isOpen={!!deleteCategory}
+        onClose={() => setDeleteCategory(null)}
+        category={deleteCategory}
+      />
     </div>
   );
 }

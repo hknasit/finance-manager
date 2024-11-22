@@ -24,6 +24,7 @@ const config: NextConfig = {
         source: "/",
         destination: "/dashboard",
         permanent: true,
+        
       },
     ];
   },
@@ -38,6 +39,8 @@ const config: NextConfig = {
 
   // Output configuration for better optimization
   output: "standalone",
+
+  skipTrailingSlashRedirect: false,
 };
 
 export default config;

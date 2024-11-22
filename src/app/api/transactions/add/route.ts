@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   try {
     // Verify authentication first
     const authPayload = await verifyAuth();
-    const userId: string = authPayload.id as string;
+    const userId = authPayload.id;
 
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -192,7 +192,7 @@ async function initializeUserExcel(userId: string) {
 export async function GET(req: Request) {
   try {
     const authPayload = await verifyAuth();
-    const userId = authPayload.userId;
+    const userId = authPayload.id;
 
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

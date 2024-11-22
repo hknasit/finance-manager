@@ -4,18 +4,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/user.model";
 import { verifyAuth } from "@/lib/auth";
-
-type Context = {
-  params: { categoryId: string };
-};
+interface Params {
+  params: Promise<{
+    categoryId: string;
+  }>;
+}
 
 // PATCH - Update a category
-export async function PATCH(req: NextRequest, context: Context) {
+export async function PATCH(req: NextRequest, params: Params) {
   try {
     const payload = await verifyAuth();
     await connectDB();
     const userId = payload.id;
-    const { categoryId } = await context.params;
+    const { categoryId } = await params.params;
     const { name, type } = await req.json();
 
     // Validate input
@@ -79,12 +80,12 @@ export async function PATCH(req: NextRequest, context: Context) {
 }
 
 // DELETE - Delete a category
-export async function DELETE(req: NextRequest, context: Context) {
+export async function DELETE(req: NextRequest, params: Params) {
   try {
     const payload = await verifyAuth();
     await connectDB();
     const userId = payload.id;
-    const { categoryId } = context.params;
+    const { categoryId } = await params.params;
 
     const user = await User.findById(userId);
     if (!user) {

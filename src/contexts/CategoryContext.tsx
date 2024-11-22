@@ -9,7 +9,10 @@ interface Category {
 }
 
 interface CategoryContextType {
-  categories: Category[];
+  categories: {
+    income: Category[];
+    expense: Category[];
+  };
   loading: boolean;
   error: string | null;
   fetchCategories: () => Promise<void>;
@@ -27,9 +30,33 @@ const CategoryContext = createContext<CategoryContextType | undefined>(
 );
 
 export function CategoryProvider({ children }: { children: React.ReactNode }) {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<{
+    income: Category[];
+    expense: Category[];
+  }>({
+    income: [],
+    expense: [],
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const sortAndGroupCategories = (categoriesArray: Category[]) => {
+    const sorted = categoriesArray.reduce<{
+      income: Category[];
+      expense: Category[];
+    }>(
+      (acc, category) => {
+        acc[category.type].push(category);
+        return acc;
+      },
+      { income: [], expense: [] }
+    );
+
+    sorted.income.sort((a, b) => a.name.localeCompare(b.name));
+    sorted.expense.sort((a, b) => a.name.localeCompare(b.name));
+
+    return sorted;
+  };
 
   const fetchCategories = async () => {
     try {
@@ -38,11 +65,10 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_PATH}/api/user/categories`
       );
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
+      if (!response.ok) throw new Error("Failed to fetch categories");
+
       const data = await response.json();
-      setCategories(data.categories);
+      setCategories(sortAndGroupCategories(data.categories));
     } catch (err) {
       setError(err.message);
       console.error("Error fetching categories:", err);
@@ -69,7 +95,7 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
       }
 
       const data = await response.json();
-      setCategories(data.categories);
+      setCategories(sortAndGroupCategories(data.categories));
     } catch (err) {
       setError(err.message);
       throw err;
@@ -98,7 +124,7 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
       }
 
       const data = await response.json();
-      setCategories(data.categories);
+      setCategories(sortAndGroupCategories(data.categories));
     } catch (err) {
       setError(err.message);
       throw err;
@@ -121,7 +147,7 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
       }
 
       const data = await response.json();
-      setCategories(data.categories);
+      setCategories(sortAndGroupCategories(data.categories));
     } catch (err) {
       setError(err.message);
       throw err;
@@ -142,6 +168,7 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
         addCategory,
         updateCategory,
         deleteCategory,
+
       }}
     >
       {children}
