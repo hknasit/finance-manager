@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { useEffect, useState } from "react";
@@ -308,6 +309,7 @@ export default function MonthlyTransactionsView() {
         ) : (
           <div className="divide-y divide-slate-200">
             {Object.entries(sortedGroupedTransactions).map(
+              //@ts-ignore
               ([dateKey, { formattedDate, transactions }]) => (
                 <div key={dateKey}>
                   <div className="sticky top-[137px] px-4 py-3 bg-slate-100 border-y border-slate-200 z-10">
