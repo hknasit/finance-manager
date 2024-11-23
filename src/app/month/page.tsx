@@ -1,18 +1,17 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
   CreditCard,
   Wallet,
-  ChevronDown,
-  ChevronUp,
-  TrendingUp,
-  TrendingDown,
 } from "lucide-react";
+import { TransactionDetails } from "./TransactionDetails";
+import { FilterPanel } from "./FilterPanel";
+import { useCategories } from "@/contexts/CategoryContext";
 
 interface Transaction {
   _id: string;
@@ -22,15 +21,35 @@ interface Transaction {
   description: string;
   date: string;
   paymentMethod: "card" | "cash";
+  notes?: string;
 }
 
-export default function MonthlyTransactionsPage() {
+interface FilterState {
+  type: "all" | "income" | "expense";
+  category: string;
+  paymentMethod: "all" | "card" | "cash";
+  startDate: string;
+  endDate: string;
+}
+
+export default function MonthlyTransactionsView() {
   const { isAuthenticated } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    type: "all",
+    category: "all",
+    paymentMethod: "all",
+    startDate: "",
+    endDate: "",
+  });
+  const { categories } = useCategories();
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchTransactions();
@@ -46,37 +65,67 @@ export default function MonthlyTransactionsPage() {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/monthly/${year}/${month}`
       );
+
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");
       }
 
       const data = await response.json();
-      setTransactions(data);
+      console.log("Fetched transactions:", data.transactions);
+      setTransactions(data || []); // Provide default empty array
+      setError(null);
     } catch (err) {
       console.error("Error fetching transactions:", err);
       setError(
         err instanceof Error ? err.message : "Failed to fetch transactions"
       );
+      setTransactions([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number): string => {
-    return amount.toLocaleString("en-CA", {
-      style: "currency",
-      currency: "CAD",
-      minimumFractionDigits: 2,
-    });
-  };
+  useEffect(() => {
+    console.log("Current transactions:", transactions);
+    console.log("Filtered transactions:", filteredTransactions);
+    console.log("Grouped transactions:", groupedTransactions);
+  }, [transactions, filters]);
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("en-CA", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+  // Filter transactions with improved logging
+  const filteredTransactions = transactions.filter((transaction) => {
+    if (!transaction) {
+      console.log("Found null transaction");
+      return false;
+    }
+
+    // Log each filter condition
+    const typeMatch =
+      filters.type === "all" || transaction.type === filters.type;
+    const categoryMatch =
+      filters.category === "all" || transaction.category === filters.category;
+    const paymentMatch =
+      filters.paymentMethod === "all" ||
+      transaction.paymentMethod === filters.paymentMethod;
+
+    let dateMatch = true;
+    if (filters.startDate) {
+      dateMatch =
+        dateMatch && new Date(transaction.date) >= new Date(filters.startDate);
+    }
+    if (filters.endDate) {
+      dateMatch =
+        dateMatch && new Date(transaction.date) <= new Date(filters.endDate);
+    }
+
+    console.log(`Transaction ${transaction._id} matches:`, {
+      typeMatch,
+      categoryMatch,
+      paymentMatch,
+      dateMatch,
     });
-  };
+
+    return typeMatch && categoryMatch && paymentMatch && dateMatch;
+  });
 
   const navigateMonth = (direction: "prev" | "next") => {
     setSelectedDate((currentDate) => {
@@ -90,26 +139,71 @@ export default function MonthlyTransactionsPage() {
     });
   };
 
-  const monthYearDisplay = selectedDate.toLocaleString("en-CA", {
-    month: "long",
-    year: "numeric",
-  });
+  // Filter transactions with null check
 
-  const getCategoryColor = (category: string): string => {
-    const colors: { [key: string]: string } = {
-      "Credit Bill": "text-purple-600",
-      Donation: "text-blue-600",
-      Rent: "text-orange-600",
-      Food: "text-green-600",
-      Miscellaneous: "text-gray-600",
-    };
-    return colors[category] || "text-gray-600";
-  };
+  // Group transactions by date with null check
+  const groupedTransactions = filteredTransactions.reduce(
+    (groups, transaction) => {
+      if (!transaction) return groups;
+
+      try {
+        const date = new Date(transaction.date);
+        if (isNaN(date.getTime())) {
+          console.error("Invalid date for transaction:", transaction);
+          return groups;
+        }
+
+        const dateKey = date.toISOString().split("T")[0];
+        const formattedDate = date.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+        });
+
+        if (!groups[dateKey]) {
+          groups[dateKey] = {
+            formattedDate,
+            transactions: [],
+          };
+        }
+        groups[dateKey].transactions.push(transaction);
+
+        // Sort transactions within each day by date (newest first)
+        groups[dateKey].transactions.sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+
+        return groups;
+      } catch (error) {
+        console.error("Error processing transaction:", transaction, error);
+        return groups;
+      }
+    },
+    {}
+  );
+  const sortedGroupedTransactions = Object.entries(groupedTransactions)
+    .sort(([dateKeyA], [dateKeyB]) => {
+      const dateA = new Date(dateKeyA);
+      const dateB = new Date(dateKeyB);
+      return dateB.getTime() - dateA.getTime();
+    })
+    .reduce((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {});
+  // Calculate totals with null check
+  const totals = filteredTransactions.reduce(
+    (acc, t) => ({
+      income: acc.income + (t?.type === "income" ? t.amount : 0),
+      expense: acc.expense + (t?.type === "expense" ? t.amount : 0),
+    }),
+    { income: 0, expense: 0 }
+  );
 
   if (!isAuthenticated) {
     return (
-      <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-lg">
-        <div className="text-gray-600">
+      <div className="flex justify-center items-center min-h-screen bg-slate-50 p-4">
+        <div className="text-center text-slate-600">
           Please log in to view your transactions.
         </div>
       </div>
@@ -118,97 +212,83 @@ export default function MonthlyTransactionsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-lg">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex justify-center items-center min-h-screen bg-slate-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-lg">
-        <div className="text-red-500">Error: {error}</div>
-      </div>
-    );
-  }
-
-  const totals = {
-    income: transactions.reduce(
-      (sum, t) => sum + (t.type === "income" ? t.amount : 0),
-      0
-    ),
-    expense: transactions.reduce(
-      (sum, t) => sum + (t.type === "expense" ? t.amount : 0),
-      0
-    ),
-    net: transactions.reduce(
-      (sum, t) => sum + (t.type === "income" ? t.amount : -t.amount),
-      0
-    ),
-  };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-6">
-      {/* Header Section */}
-      <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white">
-        <div className="container mx-auto px-4 py-6 md:py-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              Monthly Transactions
-            </h2>
-            <div className="flex items-center justify-between bg-white/20 backdrop-blur-sm rounded-xl p-1.5 w-full md:w-auto">
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-white shadow-sm">
+        <div className="max-w-2xl mx-auto">
+          <div className="px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => navigateMonth("prev")}
-                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ChevronLeft className="w-6 h-6 text-slate-600" />
               </button>
-              <div className="flex items-center gap-2 px-4">
-                <Calendar className="w-5 h-5" />
-                <span className="text-lg font-semibold">
-                  {monthYearDisplay}
-                </span>
-              </div>
+              <h2 className="text-xl font-semibold text-slate-900">
+                {selectedDate.toLocaleString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </h2>
               <button
                 onClick={() => navigateMonth("next")}
-                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
               >
-                <ArrowRight className="w-5 h-5" />
+                <ChevronRight className="w-6 h-6 text-slate-600" />
               </button>
             </div>
+            <button
+              onClick={() => setShowFilters(true)}
+              className="p-2 hover:bg-slate-100 rounded-xl transition-colors relative"
+            >
+              <Filter className="w-6 h-6 text-slate-600" />
+              {(filters.type !== "all" ||
+                filters.category !== "all" ||
+                filters.paymentMethod !== "all" ||
+                filters.startDate ||
+                filters.endDate) && (
+                <div className="absolute top-0 right-0 w-2 h-2 bg-green-600 rounded-full" />
+              )}
+            </button>
           </div>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 md:p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingUp className="w-5 h-5" />
-                <div className="text-sm text-white/90">Total Income</div>
+          {/* Summary */}
+          <div className="px-4 py-4 grid grid-cols-3 gap-4 border-t border-slate-200">
+            <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-medium text-slate-500 mb-1">
+                EXPENSE
               </div>
-              <div className="text-xl md:text-2xl font-bold">
-                {formatCurrency(totals.income)}
-              </div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 md:p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingDown className="w-5 h-5" />
-                <div className="text-sm text-white/90">Total Expenses</div>
-              </div>
-              <div className="text-xl md:text-2xl font-bold">
-                {formatCurrency(totals.expense)}
+              <div className="text-lg font-semibold text-red-600">
+                ${totals.expense.toLocaleString()}
               </div>
             </div>
-            <div className="col-span-2 md:col-span-1 bg-white/20 backdrop-blur-sm rounded-xl p-4 md:p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Wallet className="w-5 h-5" />
-                <div className="text-sm text-white/90">Net Amount</div>
+            <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-medium text-slate-500 mb-1">
+                INCOME
+              </div>
+              <div className="text-lg font-semibold text-green-600">
+                ${totals.income.toLocaleString()}
+              </div>
+            </div>
+            <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-medium text-slate-500 mb-1">
+                TOTAL
               </div>
               <div
-                className={`text-xl md:text-2xl font-bold ${
-                  totals.net >= 0 ? "text-green-300" : "text-red-300"
+                className={`text-lg font-semibold ${
+                  totals.income - totals.expense >= 0
+                    ? "text-green-600"
+                    : "text-red-600"
                 }`}
               >
-                {formatCurrency(totals.net)}
+                ${(totals.income - totals.expense).toLocaleString()}
               </div>
             </div>
           </div>
@@ -216,153 +296,87 @@ export default function MonthlyTransactionsPage() {
       </div>
 
       {/* Transactions List */}
-      <div className="container mx-auto px-4">
-        <div className="relative -mt-6">
-          <div className="bg-white rounded-2xl shadow-lg">
-            {/* Desktop View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="p-4 text-left text-sm font-semibold text-slate-600">
-                      Date
-                    </th>
-                    <th className="p-4 text-left text-sm font-semibold text-slate-600">
-                      Description
-                    </th>
-                    <th className="p-4 text-left text-sm font-semibold text-slate-600">
-                      Category
-                    </th>
-                    <th className="p-4 text-left text-sm font-semibold text-slate-600">
-                      Payment
-                    </th>
-                    <th className="p-4 text-right text-sm font-semibold text-slate-600">
-                      Amount
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {transactions.map((transaction) => (
-                    <tr
-                      key={transaction._id}
-                      className="hover:bg-slate-50 transition-colors"
-                    >
-                      <td className="p-4 text-sm text-slate-600">
-                        {formatDate(transaction.date)}
-                      </td>
-                      <td className="p-4 text-sm font-medium text-slate-900">
-                        {transaction.description}
-                      </td>
-                      <td
-                        className={`p-4 text-sm font-medium ${getCategoryColor(
-                          transaction.category
-                        )}`}
-                      >
-                        {transaction.category}
-                      </td>
-                      <td className="p-4 text-sm text-slate-600 capitalize">
-                        {transaction.paymentMethod}
-                      </td>
-                      <td
-                        className={`p-4 text-right text-sm font-semibold ${
-                          transaction.type === "income"
-                            ? "text-emerald-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {transaction.type === "income" ? "+" : "-"}{" "}
-                        {formatCurrency(transaction.amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile View */}
-            <div className="md:hidden divide-y divide-slate-100">
-              {transactions.length === 0 ? (
-                <div className="p-8 text-center text-slate-500">
-                  No transactions found for {monthYearDisplay}
-                </div>
-              ) : (
-                transactions.map((transaction) => (
-                  <div key={transaction._id} className="p-4">
-                    <button
-                      onClick={() =>
-                        setExpandedId(
-                          expandedId === transaction._id
-                            ? null
-                            : transaction._id
-                        )
-                      }
-                      className="w-full"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-slate-900">
-                            {transaction.description}
-                          </span>
-                          <span className="text-sm text-slate-500">
-                            {formatDate(transaction.date)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`text-sm font-semibold ${
-                              transaction.type === "income"
-                                ? "text-emerald-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {transaction.type === "income" ? "+" : "-"}{" "}
-                            {formatCurrency(transaction.amount)}
-                          </span>
-                          {expandedId === transaction._id ? (
-                            <ChevronUp className="w-4 h-4 text-slate-400" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4 text-slate-400" />
-                          )}
-                        </div>
-                      </div>
-                    </button>
-
-                    {expandedId === transaction._id && (
-                      <div className="mt-4 grid grid-cols-2 gap-3">
-                        <div className="p-3 bg-slate-50 rounded-xl">
-                          <div className="text-xs text-slate-500 mb-1">
-                            Category
-                          </div>
-                          <div
-                            className={`text-sm font-medium ${getCategoryColor(
-                              transaction.category
-                            )}`}
-                          >
-                            {transaction.category}
-                          </div>
-                        </div>
-                        <div className="p-3 bg-slate-50 rounded-xl">
-                          <div className="text-xs text-slate-500 mb-1">
-                            Payment Method
-                          </div>
-                          <div className="text-sm font-medium text-slate-700 capitalize flex items-center gap-2">
-                            {transaction.paymentMethod === "card" ? (
-                              <CreditCard className="w-4 h-4" />
-                            ) : (
-                              <Wallet className="w-4 h-4" />
-                            )}
-                            {transaction.paymentMethod}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+      <div className="max-w-2xl mx-auto bg-white shadow-sm mt-4">
+        {!transactions.length ? (
+          <div className="py-12 text-center text-slate-500">
+            No transactions for this month
           </div>
-        </div>
+        ) : !filteredTransactions.length ? (
+          <div className="py-12 text-center text-slate-500">
+            No transactions match the selected filters
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-200">
+            {Object.entries(sortedGroupedTransactions).map(
+              ([dateKey, { formattedDate, transactions }]) => (
+                <div key={dateKey}>
+                  <div className="sticky top-[137px] px-4 py-3 bg-slate-100 border-y border-slate-200 z-10">
+                    <div className="text-sm font-medium text-slate-700">
+                      {formattedDate}
+                    </div>
+                  </div>
+                  <div>
+                    {transactions.map((transaction: Transaction) => (
+                      <button
+                        key={transaction._id}
+                        className="w-full px-4 py-4 flex items-start justify-between hover:bg-slate-50 transition-colors"
+                        onClick={() => setSelectedTransaction(transaction)}
+                      >
+                        <div className="flex flex-col items-start">
+                          <div className="font-medium text-slate-900 mb-1">
+                            {transaction.description || transaction.category}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 rounded-lg text-xs font-medium text-slate-600">
+                              {transaction.paymentMethod === "card" ? (
+                                <CreditCard className="w-3 h-3" />
+                              ) : (
+                                <Wallet className="w-3 h-3" />
+                              )}
+                              {transaction.paymentMethod}
+                            </span>
+                            <span className="inline-flex items-center px-2 py-1 bg-slate-100 rounded-lg text-xs font-medium text-slate-600">
+                              {transaction.category}
+                            </span>
+                          </div>
+                        </div>
+                        <div
+                          className={`text-base font-semibold ${
+                            transaction.type === "expense"
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }`}
+                        >
+                          {transaction.type === "expense" ? "-" : "+"}$
+                          {transaction.amount.toLocaleString()}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <FilterPanel
+          onClose={() => setShowFilters(false)}
+          filters={filters}
+          setFilters={setFilters}
+         
+        />
+      )}
+
+      {/* Transaction Details Modal */}
+      {selectedTransaction && (
+        <TransactionDetails
+          transaction={selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+        />
+      )}
     </div>
   );
 }
