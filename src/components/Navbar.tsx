@@ -10,6 +10,7 @@ import {
   CalendarDays,
   ArrowLeftRight,
   User,
+  Tag,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -37,6 +38,12 @@ export default function Navbar() {
       href: "/month",
       icon: CalendarDays,
       description: "Monthly records",
+    },
+    {
+      name: "Categories",
+      href: "/category",
+      icon: Tag,
+      description: "Add, edit categories",
     },
   ];
 
