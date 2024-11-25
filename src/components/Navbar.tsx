@@ -11,7 +11,8 @@ import {
   ArrowLeftRight,
   User,
   Tag,
-  ChartLine
+  ChartLine,
+  FileChartColumn,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -51,7 +52,13 @@ export default function Navbar() {
       href: "/analytics",
       icon: ChartLine,
       description: "View analytics",
-    }
+    },
+    {
+      name: "Report",
+      href: "/report",
+      icon: FileChartColumn,
+      description: "View report",
+    },
   ];
 
   const isActive = (path: string) => pathname === path;
