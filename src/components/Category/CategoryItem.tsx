@@ -31,7 +31,7 @@ export function CategoryItem({
         onClick={onSelect}
       >
         <span className="text-slate-700">{category.name}</span>
-        <button
+        {/* <button
           onClick={(e) => {
             e.stopPropagation();
             setShowActions(!showActions);
@@ -39,7 +39,7 @@ export function CategoryItem({
           className="p-1 rounded-lg hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <MoreHorizontal size={18} className="text-slate-500" />
-        </button>
+        </button> */}
       </button>
 
       {/* Dropdown Actions */}

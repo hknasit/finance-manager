@@ -27,7 +27,7 @@ export default function TransactionInput() {
   const [transactionDate, setTransactionDate] = useState(new Date());
   const categoryRef = useRef<HTMLDivElement>(null);
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const { categories,  } = useCategories();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [loading, setLoading] = useState(false);
 
   const [category, setCategory] = useState("");
@@ -39,7 +39,9 @@ export default function TransactionInput() {
     if (categoryList.length > 0 && !category) {
       setCategory(categoryList[0].name);
     }
+   
   }, [categories, type, category]);
+
 
   const handleTypeChange = (newType: "income" | "expense") => {
     setType(newType);
@@ -193,6 +195,14 @@ export default function TransactionInput() {
       setLoading(false);
     }
   };
+
+  if (categoriesLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-slate-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-slate-100 md:bg-white md:min-h-[calc(100vh-4rem)] w-full flex items-start justify-center">
       <div className="w-full md:max-w-sm bg-white md:my-4 md:rounded-3xl md:shadow-lg">
@@ -308,7 +318,7 @@ export default function TransactionInput() {
                   </div>
 
                   {/* Add Category Button */}
-                  <div className="border-t border-slate-200">
+                  {/* <div className="border-t border-slate-200">
                     <button
                       onClick={() => {
                         setShowCategories(false);
@@ -320,7 +330,7 @@ export default function TransactionInput() {
                       <Plus size={18} />
                       <span className="font-medium">Add New Category</span>
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               )}
             </div>
