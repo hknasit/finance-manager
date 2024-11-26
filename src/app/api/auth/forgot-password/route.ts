@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     await user.save();
 
     // Create reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_BASE_PATH}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}${process.env.NEXT_PUBLIC_BASE_PATH}/reset-password/${hashedToken}`;
 
     // Send email
     await transporter.sendMail({

@@ -14,14 +14,10 @@ interface Params {
   }>;
 }
 
-export async function GET(
-  request: NextRequest,
-  params: Params
-) {
+export async function GET(request: NextRequest, params: Params) {
   try {
     // Validate year and month parameters first
-    const {year , month} = await params.params;
-   
+    const { year, month } = await params.params;
 
     if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
       return NextResponse.json(
@@ -64,22 +60,14 @@ export async function GET(
       await mongoose.connect(process.env.MONGODB_URI!);
     }
 
-    console.log("Querying with parameters:", {
-      userId: userId.toString(),
-      startDate,
-      endDate,
-    });
-
     // Fetch transactions
     const transactions = await Transaction.find({
       user: userId,
-      date: { $gte: startDate, $lte: endDate }
+      date: { $gte: startDate, $lte: endDate },
     })
-    .sort({ date: -1 })
-    .lean()
-    .then(docs => JSON.parse(JSON.stringify(docs)));
-
-    console.log(`Found ${transactions.length} transactions`);
+      .sort({ date: -1 })
+      .lean()
+      .then((docs) => JSON.parse(JSON.stringify(docs)));
 
     return NextResponse.json(transactions);
   } catch (error) {

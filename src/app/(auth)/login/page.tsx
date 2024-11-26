@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   // const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  // Show success message if redirected from registration
+ // Show success message if redirected from registration
   // useEffect(() => {
   //   if (searchParams?.get("registered") === "true") {
   //     setShowSuccessMessage(true);
@@ -33,7 +33,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      login(formData.email, formData.password);
+     await login(formData.email, formData.password);
     } catch (err: any) {
       setError(err.message);
       setIsLoading(false);
@@ -125,7 +125,7 @@ export default function LoginPage() {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <input
+              {/* <input
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
@@ -140,7 +140,7 @@ export default function LoginPage() {
                 className="ml-2 block text-sm text-gray-900"
               >
                 Remember me
-              </label>
+              </label> */}
             </div>
 
             <div className="text-sm">

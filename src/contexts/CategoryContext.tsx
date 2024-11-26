@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 interface Category {
   _id: string;
@@ -37,6 +38,7 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
     income: [],
     expense: [],
   });
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +62,7 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
 
   const fetchCategories = async () => {
     try {
+      if (!isAuthenticated) return;
       setLoading(true);
       setError(null);
       const response = await fetch(
@@ -155,9 +158,13 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    fetchCategories();
+    if (isAuthenticated) {
+      fetchCategories();
+    }
   }, []);
-
+  useEffect(() => {
+    fetchCategories();
+  }, [isAuthenticated]);
   return (
     <CategoryContext.Provider
       value={{
@@ -168,7 +175,6 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
         addCategory,
         updateCategory,
         deleteCategory,
-
       }}
     >
       {children}

@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
 
     const { token, password } = await request.json();
 
+
     if (!token || !password) {
       return NextResponse.json(
         { message: "Token and password are required" },

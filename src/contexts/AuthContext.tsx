@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
@@ -34,16 +34,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const getCookie = (name: string): string | null => {
-    return document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(name + '='))
-    ?.split('=')[1] || null;
+    return (
+      document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(name + "="))
+        ?.split("=")[1] || null
+    );
   };
 
   const checkAuth = () => {
     try {
       const token = getCookie("auth-token");
-      console.log("Checking auth token:", token); // Debug log
+
       if (!token) {
         handleLogout();
         return;
@@ -69,16 +71,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Important for cookie handling
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include", // Important for cookie handling
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Login failed");
+        throw new Error(errorData.error || "Login failed");
       }
 
       const data = await response.json();
@@ -91,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
-      throw error;
+      throw new Error(error);
     }
   };
 
