@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { CreditCard, Wallet, X, Check, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import DatePicker from "./DatePicker";
-import { Plus } from "lucide-react";
 import { AddCategoryModal } from "./Category/AddCategoryModal";
 import { useCategories } from "@/contexts/CategoryContext";
 import { CategoryItem } from "./Category/CategoryItem";
