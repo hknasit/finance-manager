@@ -7,12 +7,11 @@ import {
   LogIn,
   ChevronDown,
   Calendar1,
-  CalendarDays,
-  ArrowLeftRight,
   User,
   Tag,
   ChartLine,
   FileChartColumn,
+  Home,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,22 +23,16 @@ export default function Navbar() {
 
   const protectedNavigation = [
     {
-      name: "Add",
+      name: "Home",
       href: "/dashboard",
-      icon: ArrowLeftRight,
-      description: "Add new transactions",
+      icon: Home,
+      description: "Home page",
     },
     {
       name: "Year",
       href: "/spreadsheet",
       icon: Calendar1,
       description: "Yearly records",
-    },
-    {
-      name: "Month",
-      href: "/month",
-      icon: CalendarDays,
-      description: "Monthly records",
     },
     {
       name: "Categories",

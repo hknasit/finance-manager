@@ -1,158 +1,193 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-"use client";
-
-import React, { useState } from "react";
-import { CreditCard, ShoppingCart, X, Check } from "lucide-react";
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import React, { useState, useEffect, useRef } from "react";
+import {
+  CreditCard,
+  Wallet,
+  X,
+  Check,
+  ChevronDown,
+  Search,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface CalculatorState {
-  currentValue: string;
-  previousValue: string;
-  operation: string | null;
-  isNewNumber: boolean;
-}
+import "react-datepicker/dist/react-datepicker.css";
+import { useCategories } from "@/contexts/CategoryContext";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import dayjs from "dayjs";
 
-export default function TransactionInput() {
+interface TransactionInputProps {
+  setShowForm: (boolean) => void;
+}
+const datePickerTheme = createTheme({
+  palette: {
+    primary: {
+      main: "#16a34a", // green-600
+    },
+  },
+  components: {
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: "0.75rem", // rounded-xl
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#e2e8f0", // slate-200
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#cbd5e1", // slate-300
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#16a34a", // green-600
+            borderWidth: "1px",
+          },
+          fontSize: "0.875rem", // text-sm
+          "& input": {
+            padding: "0.625rem 0.75rem", // py-2.5 px-3
+          },
+        },
+      },
+    },
+    //@ts-ignore
+    MuiPickersDay: {
+      styleOverrides: {
+        root: {
+          fontFamily: "inherit",
+          borderRadius: "0.375rem",
+          "&.Mui-selected": {
+            backgroundColor: "#16a34a", // green-600
+            "&:hover": {
+              backgroundColor: "#15803d", // green-700
+            },
+          },
+          "&:hover": {
+            backgroundColor: "#f1f5f9", // slate-100
+          },
+        },
+      },
+    },
+    MuiPickersCalendarHeader: {
+      styleOverrides: {
+        root: {
+          fontFamily: "inherit",
+          "& .MuiPickersCalendarHeader-label": {
+            fontSize: "0.875rem",
+            fontWeight: 500,
+          },
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: "0.75rem",
+        },
+      },
+    },
+  },
+});
+
+export default function TransactionInput({
+  setShowForm,
+}: TransactionInputProps) {
   const { isAuthenticated } = useAuth();
   const [description, setDescription] = useState("");
-  const [type, setType] = useState("expense");
-  const [account, setAccount] = useState("card");
-  const [category, setCategory] = useState("Rent");
-  const [loading, setLoading] = useState(false);
+  const [type, setType] = useState<"income" | "expense">("expense");
+  const [paymentMethod, setPaymentMethod] = useState("card");
   const [error, setError] = useState("");
+  const [showCategories, setShowCategories] = useState(false);
+  const [transactionDate, setTransactionDate] = useState(new Date());
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const { categories } = useCategories();
+  const [loading, setLoading] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Calculator state
-  const [calc, setCalc] = useState<CalculatorState>({
-    currentValue: "0",
-    previousValue: "",
-    operation: null,
-    isNewNumber: true,
-  });
+  // Close category dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        categoryRef.current &&
+        !categoryRef.current.contains(event.target as Node)
+      ) {
+        setShowCategories(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  // Handle number input
-  const handleNumber = (num: string) => {
-    if (calc.isNewNumber) {
-      setCalc((prev) => ({
-        ...prev,
-        currentValue: num,
-        isNewNumber: false,
-      }));
+  // Update category whenever categories or type changes
+  useEffect(() => {
+    const categoryList =
+      type === "expense" ? categories.expense : categories.income;
+    if (categoryList.length > 0 && !category) {
+      setCategory(categoryList[0].name);
+    }
+  }, [categories, type, category]);
+
+  const handleTypeChange = (newType: "income" | "expense") => {
+    setType(newType);
+    const categoryList =
+      newType === "expense" ? categories.expense : categories.income;
+    if (categoryList.length > 0) {
+      setCategory(categoryList[0].name);
     } else {
-      if (num === "." && calc.currentValue.includes(".")) return;
-      setCalc((prev) => ({
-        ...prev,
-        currentValue: prev.currentValue + num,
-      }));
+      setCategory("");
+    }
+    setSearchTerm("");
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d*\.?\d*$/.test(value) || value === "") {
+      setAmount(value);
     }
   };
 
-  // Handle operation
-  const handleOperation = (op: string) => {
-    if (calc.operation && !calc.isNewNumber) {
-      // Calculate previous operation first
-      calculateResult();
-    }
-
-    setCalc((prev) => ({
-      ...prev,
-      operation: op,
-      previousValue: prev.currentValue,
-      isNewNumber: true,
-    }));
-  };
-
-  // Calculate result
-  const calculateResult = () => {
-    if (!calc.operation || !calc.previousValue) return;
-
-    const prev = parseFloat(calc.previousValue);
-    const current = parseFloat(calc.currentValue);
-    let result = 0;
-
-    switch (calc.operation) {
-      case "+":
-        result = prev + current;
-        break;
-      case "-":
-        result = prev - current;
-        break;
-      case "×":
-        result = prev * current;
-        break;
-      case "÷":
-        result = prev / current;
-        break;
-    }
-
-    setCalc({
-      currentValue: result.toString(),
-      previousValue: "",
-      operation: null,
-      isNewNumber: true,
-    });
-  };
-
-  // Handle equals
-  const handleEquals = () => {
-    if (calc.operation) {
-      calculateResult();
-    }
-  };
-
-  // Clear calculator
   const handleClear = () => {
-    setCalc({
-      currentValue: "0",
-      previousValue: "",
-      operation: null,
-      isNewNumber: true,
-    });
+    setShowForm(false);
+    setAmount("");
   };
 
-  // Save transaction
   const handleSave = async () => {
     try {
-      if (!isAuthenticated) {
-        throw new Error("Please login to add transactions");
-      }
-
-      if (!description.trim()) {
-        throw new Error("Please add a description");
-      }
+      if (!isAuthenticated) throw new Error("Please login to add transactions");
+      if (!description.trim()) throw new Error("Please add a description");
+      if (!amount || parseFloat(amount) <= 0)
+        throw new Error("Please enter a valid amount");
 
       setLoading(true);
       setError("");
 
-      const amount = parseFloat(calc.currentValue);
-      if (isNaN(amount) || amount <= 0) {
-        throw new Error("Please enter a valid amount");
-      }
-
       const transactionData = {
         type,
         category,
-        amount,
+        amount: parseFloat(amount),
         description: description.trim(),
-        paymentMethod: account,
-        date: new Date().toISOString(),
+        paymentMethod,
+        date: transactionDate.toISOString(),
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/add`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(transactionData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/add`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(transactionData),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to save transaction");
       }
 
-      handleClear();
+      setAmount("");
       setDescription("");
-      // Show success message or redirect
-      console.log("Google sheet update")
-
+      setShowForm(false);
     } catch (err) {
       setError(err.message);
       console.error("Transaction error:", err);
@@ -161,207 +196,216 @@ export default function TransactionInput() {
     }
   };
 
+  const filteredCategories = (
+    type === "expense" ? categories.expense : categories.income
+  ).filter((cat) => cat.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
   return (
-    <div className="max-w-sm mx-auto bg-white p-4 rounded-3xl shadow-lg">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <button
-          onClick={() => window.history.back()}
-          disabled={loading}
-          className="text-green-600 font-medium flex items-center gap-1"
-        >
-          <X size={18} />
-          CANCEL
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="text-green-600 font-medium flex items-center gap-1"
-        >
-          <Check size={18} />
-          {loading ? "SAVING..." : "SAVE"}
-        </button>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-2 bg-red-50 text-red-600 rounded text-sm">
-          {error}
-        </div>
-      )}
-
-      {/* Transaction Type Selector */}
-      <div className="flex justify-center gap-4 text-sm mb-6">
-        {["income", "expense", "transfer"].map((t) => (
+    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-start justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl flex flex-col max-h-[85vh] mt-4 mb-20">
+        {/* Header */}
+        <div className="sticky top-0 p-3 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl z-10">
           <button
-            key={t}
-            className={`uppercase ${
-              type === t ? "text-green-600" : "text-gray-400"
-            }`}
-            onClick={() => setType(t)}
+            onClick={handleClear}
             disabled={loading}
+            className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            {t}
+            <X size={18} />
+            <span className="text-sm">Close</span>
           </button>
-        ))}
-      </div>
-
-      {/* Account and Category */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <div className="text-gray-500 text-sm mb-1">Account</div>
           <button
-            className="w-full flex items-center gap-2 p-2 border rounded-lg"
+            onClick={handleSave}
             disabled={loading}
+            className="text-green-600 hover:text-green-700 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-green-50 rounded-lg transition-colors"
           >
-            <CreditCard className="w-5 h-5 text-gray-600" />
-            <span>Card</span>
+            <Check size={18} />
+            <span className="text-sm">{loading ? "Saving..." : "Save"}</span>
           </button>
         </div>
-        <div>
-          <div className="text-gray-500 text-sm mb-1">Category</div>
-          <button
-            className="w-full flex items-center gap-2 p-2 border rounded-lg"
-            disabled={loading}
-          >
-            <ShoppingCart className="w-5 h-5 text-gray-600" />
-            <span>{category}</span>
-          </button>
-        </div>
-      </div>
 
-      {/* Description Input */}
-      <div className="mb-4 p-3 border rounded-lg">
-        <input
-          type="text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description"
-          className="w-full outline-none"
-          disabled={loading}
-        />
-      </div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-3.5">
+            {error && (
+              <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
+                {error}
+              </div>
+            )}
 
-      {/* Amount Display */}
-      <div className="text-right mb-4 p-3 border rounded-lg">
-        <div className="text-4xl font-semibold">{calc.currentValue}</div>
-        {calc.operation && (
-          <div className="text-sm text-gray-500">
-            {calc.previousValue} {calc.operation}
+            {/* Transaction Type */}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+              {["income", "expense"].map((t) => (
+                <button
+                  key={t}
+                  className={`py-2.5 px-3 rounded-lg transition-all text-sm font-medium ${
+                    type === t
+                      ? "bg-white shadow-sm text-green-600"
+                      : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                  onClick={() => handleTypeChange(t as "income" | "expense")}
+                  disabled={loading}
+                >
+                  {t.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
+            {/* Payment Method */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Payment Method
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { id: "card", icon: CreditCard, label: "Card" },
+                  { id: "cash", icon: Wallet, label: "Cash" },
+                ].map(({ id, icon: Icon, label }) => (
+                  <button
+                    key={id}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 border rounded-xl transition-colors ${
+                      paymentMethod === id
+                        ? "bg-green-50 border-green-600 text-green-700 font-medium"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                    onClick={() => setPaymentMethod(id)}
+                    disabled={loading}
+                  >
+                    <Icon size={18} />
+                    <span className="text-sm">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Category */}
+            <div className="relative" ref={categoryRef}>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Category
+              </label>
+              <button
+                className="w-full flex items-center justify-between py-2.5 px-3 border border-slate-200 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-colors text-slate-700"
+                onClick={() => setShowCategories(!showCategories)}
+                disabled={loading}
+              >
+                <span className="text-sm">{category}</span>
+                <ChevronDown size={18} />
+              </button>
+
+              {showCategories && (
+                <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-2 border-b border-slate-200">
+                    <div className="relative">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search categories..."
+                        className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {filteredCategories.map((cat) => (
+                      <button
+                        key={cat._id}
+                        className={`w-full text-left px-3 py-2.5 hover:bg-slate-50 transition-colors text-sm ${
+                          category === cat.name
+                            ? "text-green-600 font-medium bg-green-50"
+                            : "text-slate-600"
+                        }`}
+                        onClick={() => {
+                          setCategory(cat.name);
+                          setShowCategories(false);
+                          setSearchTerm("");
+                        }}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                    {filteredCategories.length === 0 && (
+                      <div className="px-3 py-2.5 text-slate-500 text-sm">
+                        No categories found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Description
+              </label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="What's this for?"
+                className="w-full py-2.5 px-3 text-sm border border-slate-200 rounded-xl outline-none focus:border-green-600 transition-colors text-slate-900 placeholder:text-slate-400"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Date
+              </label>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <ThemeProvider theme={datePickerTheme}>
+                  <DatePicker
+                    value={dayjs(transactionDate)}
+                    onChange={(newValue) =>
+                      setTransactionDate(newValue.toDate())
+                    }
+                    format="MMMM D, YYYY"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                      },
+                      field: {
+                        className: "text-slate-900",
+                      },
+                      popper: {
+                        modifiers: [
+                          {
+                            name: "offset",
+                            options: {
+                              offset: [0, 8],
+                            },
+                          },
+                        ],
+                      },
+                    }}
+                  />
+                </ThemeProvider>
+              </LocalizationProvider>
+            </div>
+
+            {/* Amount */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Amount
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-2xl font-medium text-slate-900">
+                  $
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={handleAmountChange}
+                  placeholder="0.00"
+                  className="w-full pl-8 pr-3 py-2.5 text-right text-2xl font-medium border border-slate-200 rounded-xl outline-none focus:border-green-600 transition-colors text-slate-900 placeholder:text-slate-400"
+                  disabled={loading}
+                />
+              </div>
+            </div>
           </div>
-        )}
-      </div>
-
-      {/* Keypad */}
-      <div className="grid grid-cols-4 gap-2">
-        {/* Operations */}
-        <button
-          onClick={() => handleOperation("+")}
-          className="p-4 bg-green-600 text-white rounded-lg"
-        >
-          +
-        </button>
-        <button
-          onClick={() => handleNumber("7")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          7
-        </button>
-        <button
-          onClick={() => handleNumber("8")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          8
-        </button>
-        <button
-          onClick={() => handleNumber("9")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          9
-        </button>
-
-        <button
-          onClick={() => handleOperation("-")}
-          className="p-4 bg-green-600 text-white rounded-lg"
-        >
-          -
-        </button>
-        <button
-          onClick={() => handleNumber("4")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          4
-        </button>
-        <button
-          onClick={() => handleNumber("5")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          5
-        </button>
-        <button
-          onClick={() => handleNumber("6")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          6
-        </button>
-
-        <button
-          onClick={() => handleOperation("×")}
-          className="p-4 bg-green-600 text-white rounded-lg"
-        >
-          ×
-        </button>
-        <button
-          onClick={() => handleNumber("1")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          1
-        </button>
-        <button
-          onClick={() => handleNumber("2")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          2
-        </button>
-        <button
-          onClick={() => handleNumber("3")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          3
-        </button>
-
-        <button
-          onClick={() => handleOperation("÷")}
-          className="p-4 bg-green-600 text-white rounded-lg"
-        >
-          ÷
-        </button>
-        <button
-          onClick={() => handleNumber("0")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          0
-        </button>
-        <button
-          onClick={() => handleNumber(".")}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          .
-        </button>
-        <button
-          onClick={handleEquals}
-          className="p-4 bg-green-600 text-white rounded-lg"
-        >
-          =
-        </button>
-      </div>
-
-      {/* Date Display */}
-      <div className="mt-4 text-center text-gray-500 text-sm">
-        {new Date().toLocaleDateString()}{" "}
-        {new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
+        </div>
       </div>
     </div>
   );

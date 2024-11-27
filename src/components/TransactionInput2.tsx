@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { CreditCard, Wallet, X, Check, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,7 +16,13 @@ interface CalculatorState {
   isNewNumber: boolean;
 }
 
-export default function TransactionInput() {
+interface TransactionInputProps {
+  setShowForm: (boolean) => void;
+}
+
+export default function TransactionInput({
+  setShowForm,
+}: TransactionInputProps) {
   const { isAuthenticated } = useAuth();
   const [description, setDescription] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -39,9 +44,7 @@ export default function TransactionInput() {
     if (categoryList.length > 0 && !category) {
       setCategory(categoryList[0].name);
     }
-   
   }, [categories, type, category]);
-
 
   const handleTypeChange = (newType: "income" | "expense") => {
     setType(newType);
@@ -143,6 +146,7 @@ export default function TransactionInput() {
   };
 
   const handleClear = () => {
+    setShowForm(false);
     setCalc({
       currentValue: "0",
       previousValue: "",
@@ -188,6 +192,7 @@ export default function TransactionInput() {
 
       handleClear();
       setDescription("");
+      setShowForm(false);
     } catch (err) {
       setError(err.message);
       console.error("Transaction error:", err);
@@ -214,7 +219,7 @@ export default function TransactionInput() {
             className="text-green-600 font-medium flex items-center gap-1 p-2 hover:bg-green-50 rounded-lg"
           >
             <X size={20} />
-            <span className="text-sm">CLEAR</span>
+            <span className="text-sm">CLOSE</span>
           </button>
           <button
             onClick={handleSave}
@@ -392,6 +397,7 @@ export default function TransactionInput() {
           </button>
         </div>
       </div>
+
       {/* Modals */}
       <AddCategoryModal
         isOpen={showAddCategory}
