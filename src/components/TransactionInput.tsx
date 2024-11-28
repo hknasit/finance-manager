@@ -17,9 +17,25 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+interface Transaction {
+  _id: string;
+  type: "income" | "expense";
+  category: string;
+  amount: number;
+  description: string;
+  date: string;
+  paymentMethod: "card" | "cash";
+  notes?: string;
+}
 interface TransactionInputProps {
   setShowForm: (boolean) => void;
+  setTransactions: (transactions: Transaction[]) => void;
 }
 const datePickerTheme = createTheme({
   palette: {
@@ -90,6 +106,7 @@ const datePickerTheme = createTheme({
 
 export default function TransactionInput({
   setShowForm,
+  setTransactions,
 }: TransactionInputProps) {
   const { isAuthenticated } = useAuth();
   const [description, setDescription] = useState("");
@@ -97,14 +114,21 @@ export default function TransactionInput({
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [error, setError] = useState("");
   const [showCategories, setShowCategories] = useState(false);
-  const [transactionDate, setTransactionDate] = useState(new Date());
+  const [transactionDate, setTransactionDate] = useState(dayjs().toDate()); // new Date());
   const categoryRef = useRef<HTMLDivElement>(null);
   const { categories } = useCategories();
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-
+  console.log(
+    "dayjs::: ",
+    transactionDate,
+    " new Date()::: ",
+    new Date(),
+    " ISO::: ",
+    transactionDate.toISOString()
+  );
   // Close category dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -161,14 +185,18 @@ export default function TransactionInput({
 
       setLoading(true);
       setError("");
+      const localDate = new Date(transactionDate);
+      localDate.setHours(0, 0, 0, 0);
 
+      // Format date in YYYY-MM-DD format to avoid timezone issues
+      const formattedDate = localDate.toISOString().split("T")[0];
       const transactionData = {
         type,
         category,
         amount: parseFloat(amount),
         description: description.trim(),
         paymentMethod,
-        date: transactionDate.toISOString(),
+        date: formattedDate,
       };
 
       const response = await fetch(
@@ -184,7 +212,12 @@ export default function TransactionInput({
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to save transaction");
       }
-
+      const newTransaction = await response.json();
+      //@ts-ignore
+      setTransactions((prevTransactions: Transaction[]) => [
+        ...prevTransactions,
+        newTransaction.transaction,
+      ]);
       setAmount("");
       setDescription("");
       setShowForm(false);
@@ -356,10 +389,15 @@ export default function TransactionInput({
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <ThemeProvider theme={datePickerTheme}>
                   <DatePicker
+                    defaultValue={dayjs()}
                     value={dayjs(transactionDate)}
-                    onChange={(newValue) =>
-                      setTransactionDate(newValue.toDate())
-                    }
+                    onChange={(newValue) => {
+                      if (newValue) {
+                        setTransactionDate(newValue.toDate());
+                      } else {
+                        setTransactionDate(new Date());
+                      }
+                    }}
                     format="MMMM D, YYYY"
                     slotProps={{
                       textField: {

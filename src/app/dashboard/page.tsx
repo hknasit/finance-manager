@@ -121,12 +121,12 @@ export default function MonthlyTransactionsView() {
         dateMatch && new Date(transaction.date) <= new Date(filters.endDate);
     }
 
-    console.log(`Transaction ${transaction._id} matches:`, {
-      typeMatch,
-      categoryMatch,
-      paymentMatch,
-      dateMatch,
-    });
+    // console.log(`Transaction ${transaction._id} matches:`, {
+    //   typeMatch,
+    //   categoryMatch,
+    //   paymentMatch,
+    //   dateMatch,
+    // });
 
     return typeMatch && categoryMatch && paymentMatch && dateMatch;
   });
@@ -379,7 +379,10 @@ export default function MonthlyTransactionsView() {
         <div className="fixed inset-0 bg-slate-900/50 z-50">
           <div className="fixed inset-0 overflow-y-auto">
             <div className="min-h-full">
-              <TransactionInput2 setShowForm={setShowTransactionForm} />
+              <TransactionInput2
+                setShowForm={setShowTransactionForm}
+                setTransactions={setTransactions}
+              />
             </div>
           </div>
         </div>
