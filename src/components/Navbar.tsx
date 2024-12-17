@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LogOut,
-  LogIn,
   ChevronDown,
   Calendar1,
   User,
@@ -225,13 +224,14 @@ export default function Navbar() {
                 </>
               ) : (
                 // Login Button for Non-authenticated Users
-                <Link
-                  href="/login"
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Sign in</span>
-                </Link>
+                // <Link
+                //   href="/login"
+                //   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                // >
+                //   <LogIn className="h-4 w-4" />
+                //   <span>Sign in</span>
+                // </Link>
+                <></>
               )}
             </div>
           </div>

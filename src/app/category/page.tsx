@@ -1,16 +1,29 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 import React, { useState, useEffect } from "react";
-import { Plus, MoreVertical, Pencil, Trash2, DollarSign } from "lucide-react";
+import {
+  Plus,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import { useCategories } from "@/contexts/CategoryContext";
 
 const CategoryIcon = ({ type }: { type: string }) => (
   <div
-    className={`w-12 h-12 rounded-full flex items-center justify-center text-white ${
-      type === "income" ? "bg-green-600" : "bg-red-600"
+    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+      type === "income"
+        ? "bg-green-50 text-green-600"
+        : "bg-red-50 text-red-600"
     }`}
   >
-    <DollarSign size={24} />
+    {type === "income" ? (
+      <TrendingUp className="w-5 h-5" />
+    ) : (
+      <TrendingDown className="w-5 h-5" />
+    )}
   </div>
 );
 
@@ -56,51 +69,58 @@ const CategoryItem = ({
   const handleEditClick = (e) => {
     e.stopPropagation();
     onEdit(category);
+    setActiveMenu(null); // Close menu after clicking
   };
 
   const handleDeleteClick = (e) => {
     e.stopPropagation();
     onDelete(category);
+    setActiveMenu(null); // Close menu after clicking
   };
 
   return (
-    <div className="flex items-center p-4 border-b border-gray-200">
+    <div className="flex items-center px-4 py-3 border-b border-slate-100 last:border-0">
       <div className="flex items-center gap-4 flex-1">
         <CategoryIcon type={category.type} />
-        <span className="text-lg text-gray-900">{category.name}</span>
+        <span className="text-base font-medium text-slate-900">{category.name}</span>
       </div>
+      <div className="relative" data-menu-container>
+
+      
       <div className="relative">
         <button
           type="button"
           onClick={handleMenuClick}
-          className="p-2 hover:bg-gray-100 rounded-full text-gray-600"
+          className="p-2 hover:bg-slate-50 rounded-xl text-slate-600"
         >
-          <MoreVertical size={20} />
+          <MoreVertical className="w-5 h-5" />
         </button>
         {activeMenu === category._id && (
-          <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
+          <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-lg z-10 py-1 min-w-[140px] border border-slate-200">
             <button
               type="button"
               onClick={handleEditClick}
-              className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2  text-gray-600"
+              className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-600"
             >
-              <Pencil size={16} />
+              <Pencil className="w-4 h-4" />
               Edit
             </button>
             <button
               type="button"
               onClick={handleDeleteClick}
-              className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 flex items-center gap-2"
+              className="w-full px-4 py-2 text-left text-red-600 hover:bg-slate-50 flex items-center gap-2"
             >
-              <Trash2 size={16} />
+              <Trash2 className="w-4 h-4" />
               Delete
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
 };
+
 
 const CategoryDialog = ({ open, onClose, initialData, onSubmit }) => {
   const [name, setName] = useState("");
@@ -113,39 +133,32 @@ const CategoryDialog = ({ open, onClose, initialData, onSubmit }) => {
     }
   }, [open, initialData]);
 
-  useEffect(() => {
-    if (!open) {
-      setName("");
-      setType("expense");
-    }
-  }, [open]);
-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-md">
+    <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl w-full max-w-md">
         <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">
             {initialData ? "Edit Category" : "Add Category"}
           </h2>
           <div className="space-y-4">
             <div className="flex gap-2">
               <button
-                className={`flex-1 py-2 px-4 rounded-lg transition-colors ${
+                className={`flex-1 py-2 px-4 rounded-xl transition-colors ${
                   type === "income"
                     ? "bg-green-600 text-white"
-                    : "border border-gray-300  text-gray-600"
+                    : "border border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
                 onClick={() => setType("income")}
               >
                 Income
               </button>
               <button
-                className={`flex-1 py-2 px-4 rounded-lg transition-colors ${
+                className={`flex-1 py-2 px-4 rounded-xl transition-colors ${
                   type === "expense"
                     ? "bg-red-600 text-white"
-                    : "border border-gray-300  text-gray-600"
+                    : "border border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
                 onClick={() => setType("expense")}
               >
@@ -157,24 +170,22 @@ const CategoryDialog = ({ open, onClose, initialData, onSubmit }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Category Name"
-              className="w-full p-2 border rounded-lg outline-none focus:border-blue-500 text-gray-900 placeholder-gray-500"
+              className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-green-600 text-slate-900 placeholder-slate-400"
             />
           </div>
         </div>
-        <div className="flex justify-end gap-2 p-4 border-t">
+        <div className="flex justify-end gap-2 p-4 border-t border-slate-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg hover:bg-gray-100  text-gray-600"
+            className="px-4 py-2 rounded-lg hover:bg-slate-50 text-slate-600"
           >
             Cancel
           </button>
           <button
             onClick={() => {
-              if (name.trim()) {
-                onSubmit({ name: name.trim(), type });
-              }
+              if (name.trim()) onSubmit({ name: name.trim(), type });
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             disabled={!name.trim()}
           >
             {initialData ? "Update" : "Add"}
@@ -209,7 +220,7 @@ export default function CategoriesPage() {
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Only close if clicking outside of any menu
-      if (!event.target.closest(".category-menu")) {
+      if (!event.target.closest('[data-menu-container]')) {
         setActiveMenu(null);
       }
     };
@@ -219,11 +230,20 @@ export default function CategoriesPage() {
   }, []);
 
   const handleEditCategory = (category) => {
-    setDialog({ open: true, type: "edit", data: category });
+    setDialog({ 
+      open: true, 
+      type: "edit", 
+      data: category 
+    });
+    setActiveMenu(null);
   };
 
   const handleDeleteCategory = (category) => {
-    setDeleteConfirm({ open: true, category });
+    setDeleteConfirm({ 
+      open: true, 
+      category 
+    });
+    setActiveMenu(null);
   };
 
   const handleSubmit = async (data) => {
@@ -241,20 +261,20 @@ export default function CategoriesPage() {
 
   const handleDeleteConfirm = async () => {
     try {
-      if (deleteConfirm.category) {
+      if (deleteConfirm.category?._id) {
         await deleteCategory(deleteConfirm.category._id);
+        setDeleteConfirm({ open: false, category: null });
       }
     } catch (err) {
       console.error("Delete failed:", err);
-    } finally {
-      setDeleteConfirm({ open: false, category: null });
     }
   };
+
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        Loading...
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -264,71 +284,83 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
-        <button
-          onClick={() => setDialog({ open: true, type: "add", data: null })}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Plus size={20} />
-          Add Category
-        </button>
-      </div>
-
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900">
-          Income Categories
-        </h2>
-        <div className="bg-white rounded-lg shadow-sm category-menu">
-          {categories.income.map((category) => (
-            <CategoryItem
-              key={category._id}
-              category={category}
-              onEdit={handleEditCategory}
-              onDelete={handleDeleteCategory}
-              activeMenu={activeMenu}
-              setActiveMenu={setActiveMenu}
-            />
-          ))}
-          {categories.income.length === 0 && (
-            <div className="p-4 text-gray-600 text-center">
-              No income categories
-            </div>
-          )}
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-white border-b border-slate-200">
+        <div className="w-full px-4 py-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-lg font-semibold text-slate-900">Categories</h1>
+            <button
+              onClick={() => setDialog({ open: true, type: "add", data: null })}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Add Category
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900">
-          Expense Categories
-        </h2>
-        <div className="bg-white rounded-lg shadow-sm category-menu">
-          {categories.expense.map((category) => (
-            <CategoryItem
-              key={category._id}
-              category={category}
-              onEdit={handleEditCategory}
-              onDelete={handleDeleteCategory}
-              activeMenu={activeMenu}
-              setActiveMenu={setActiveMenu}
-            />
-          ))}
-          {categories.expense.length === 0 && (
-            <div className="p-4 text-gray-600 text-center">
-              No expense categories
-            </div>
-          )}
+      {/* Content */}
+      <div className="p-4 space-y-4">
+        {/* Income Categories */}
+        <div>
+          <h2 className="text-base font-medium text-slate-900 mb-2 px-1">
+            Income Categories
+          </h2>
+          <div className="bg-white rounded-xl border border-slate-200">
+            {categories.income.map((category) => (
+              <CategoryItem
+                key={category._id}
+                category={category}
+                onEdit={handleEditCategory}
+                onDelete={handleDeleteCategory}
+                activeMenu={activeMenu}
+                setActiveMenu={setActiveMenu}
+              />
+            ))}
+            {categories.income.length === 0 && (
+              <div className="p-4 text-slate-500 text-center">
+                No income categories
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Expense Categories */}
+        <div>
+          <h2 className="text-base font-medium text-slate-900 mb-2 px-1">
+            Expense Categories
+          </h2>
+          <div className="bg-white rounded-xl border border-slate-200">
+            {categories.expense.map((category) => (
+              <CategoryItem
+                key={category._id}
+                category={category}
+                onEdit={handleEditCategory}
+                onDelete={handleDeleteCategory}
+                activeMenu={activeMenu}
+                setActiveMenu={setActiveMenu}
+              />
+            ))}
+            {categories.expense.length === 0 && (
+              <div className="p-4 text-slate-500 text-center">
+                No expense categories
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* FAB */}
       <button
         onClick={() => setDialog({ open: true, type: "add", data: null })}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700"
+        className="fixed bottom-6 right-6 w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 z-40"
       >
-        <Plus size={24} />
+        <Plus className="w-5 h-5" />
       </button>
 
+      {/* Dialogs */}
       <CategoryDialog
         open={dialog.open}
         onClose={() => setDialog({ open: false, type: "add", data: null })}
@@ -342,7 +374,7 @@ export default function CategoriesPage() {
         onConfirm={handleDeleteConfirm}
         title="Delete Category"
         message={
-          <span className="text-gray-700">
+          <span>
             Are you sure you want to delete "{deleteConfirm.category?.name}"?
             This action cannot be undone.
           </span>

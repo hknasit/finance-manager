@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Download } from "lucide-react";
+import { Download, TrendingDown, TrendingUp, BadgeDollarSign } from "lucide-react";
 import { useCategories } from "@/contexts/CategoryContext";
 
 const ReportPage = () => {
@@ -12,13 +12,11 @@ const ReportPage = () => {
     endDate: new Date().toISOString().split("T")[0],
     type: "all",
     category: "all",
-    categories: [], // Array for multiple categories
+    categories: [],
     paymentMethod: "all",
   });
 
-  // Filter categories based on selected type
-  const filteredCategories =
-    categories[filters.type === "income" ? "income" : "expense"] || [];
+  const filteredCategories = categories[filters.type === "income" ? "income" : "expense"] || [];
 
   const handleExport = async () => {
     try {
@@ -29,9 +27,7 @@ const ReportPage = () => {
         `${process.env.NEXT_PUBLIC_BASE_PATH}/api/reports/export`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(filters),
         }
       );
@@ -58,7 +54,6 @@ const ReportPage = () => {
     }
   };
 
-  // Handle category selection
   const handleCategoryChange = (category) => {
     setFilters((prev) => ({
       ...prev,
@@ -69,51 +64,92 @@ const ReportPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto p-4">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Generate Report</h1>
-          <p className="text-gray-800 mt-1 text-base">
-            Export your transactions to Excel
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="sticky top-0 z-20 w-full bg-white border-b border-slate-200">
+        <div className="w-full px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold text-slate-900">Generate Report</h1>
+              <p className="text-sm text-slate-600 mt-1">
+                Export your transactions to Excel
+              </p>
+            </div>
+          </div>
 
-        {/* Filters Form */}
-        <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            {/* All Transactions */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-blue-50 rounded-lg">
+                  <BadgeDollarSign className="w-4 h-4 text-blue-600" />
+                </div>
+                <span className="text-xs font-medium text-slate-600">ALL</span>
+              </div>
+              <div className="text-base font-medium text-slate-900">
+                {filters.type === "all" ? "Selected" : ""}
+              </div>
+            </div>
+
+            {/* Income */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-green-50 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                </div>
+                <span className="text-xs font-medium text-slate-600">INCOME</span>
+              </div>
+              <div className="text-base font-medium text-slate-900">
+                {filters.type === "income" ? "Selected" : ""}
+              </div>
+            </div>
+
+            {/* Expense */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-red-50 rounded-lg">
+                  <TrendingDown className="w-4 h-4 text-red-600" />
+                </div>
+                <span className="text-xs font-medium text-slate-600">EXPENSE</span>
+              </div>
+              <div className="text-base font-medium text-slate-900">
+                {filters.type === "expense" ? "Selected" : ""}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="w-full p-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
           {/* Date Range */}
-          <div className="space-y-4">
-            <label className="block text-lg text-gray-900 font-medium">
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-900">
               Date Range
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-base text-gray-800 mb-2">
+                <label className="block text-xs text-slate-600 mb-1.5">
                   Start Date
                 </label>
                 <input
                   type="date"
                   value={filters.startDate}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      startDate: e.target.value,
-                    }))
-                  }
-                  className="w-full p-3 border text-base rounded-lg focus:outline-none focus:border-green-600 text-gray-600"
+                  onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl focus:outline-none focus:border-green-600 text-slate-900"
                 />
               </div>
               <div>
-                <label className="block text-base text-gray-800 mb-2">
+                <label className="block text-xs text-slate-600 mb-1.5">
                   End Date
                 </label>
                 <input
                   type="date"
                   value={filters.endDate}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, endDate: e.target.value }))
-                  }
-                  className="w-full p-3 border text-base rounded-lg focus:outline-none focus:border-green-600  text-gray-600"
+                  onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl focus:outline-none focus:border-green-600 text-slate-900"
                 />
               </div>
             </div>
@@ -121,19 +157,17 @@ const ReportPage = () => {
 
           {/* Transaction Type */}
           <div>
-            <label className="block text-lg text-gray-900 font-medium mb-2">
+            <label className="block text-sm font-medium text-slate-900 mb-1.5">
               Transaction Type
             </label>
             <select
               value={filters.type}
-              onChange={(e) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  type: e.target.value,
-                  categories: [], // Reset categories when type changes
-                }));
-              }}
-              className="w-full p-3 border text-base rounded-lg focus:outline-none focus:border-green-600  text-gray-600"
+              onChange={(e) => setFilters(prev => ({
+                ...prev,
+                type: e.target.value,
+                categories: [],
+              }))}
+              className="w-full p-2.5 border border-slate-200 rounded-xl focus:outline-none focus:border-green-600 text-slate-900"
             >
               <option value="all">All Types</option>
               <option value="income">Income</option>
@@ -144,24 +178,22 @@ const ReportPage = () => {
           {/* Categories */}
           {filters.type !== "all" && (
             <div>
-              <label className="block text-lg text-gray-900 font-medium mb-3">
-                {filters.type === "income"
-                  ? "Income Categories"
-                  : "Expense Categories"}
+              <label className="block text-sm font-medium text-slate-900 mb-3">
+                {filters.type === "income" ? "Income Categories" : "Expense Categories"}
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {filteredCategories.map((cat) => (
                   <label
                     key={cat._id}
-                    className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                    className="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50"
                   >
                     <input
                       type="checkbox"
                       checked={filters.categories.includes(cat.name)}
                       onChange={() => handleCategoryChange(cat.name)}
-                      className="w-4 h-4 text-green-600"
+                      className="w-4 h-4 text-green-600 rounded"
                     />
-                    <span className="text-base text-gray-800">{cat.name}</span>
+                    <span className="text-sm text-slate-900">{cat.name}</span>
                   </label>
                 ))}
               </div>
@@ -170,18 +202,13 @@ const ReportPage = () => {
 
           {/* Payment Method */}
           <div>
-            <label className="block text-lg text-gray-900 font-medium mb-2">
+            <label className="block text-sm font-medium text-slate-900 mb-1.5">
               Payment Method
             </label>
             <select
               value={filters.paymentMethod}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  paymentMethod: e.target.value,
-                }))
-              }
-              className="w-full p-3 border text-base rounded-lg focus:outline-none focus:border-green-600  text-gray-600"
+              onChange={(e) => setFilters(prev => ({ ...prev, paymentMethod: e.target.value }))}
+              className="w-full p-2.5 border border-slate-200 rounded-xl focus:outline-none focus:border-green-600 text-slate-900"
             >
               <option value="all">All Methods</option>
               <option value="cash">Cash</option>
@@ -191,7 +218,7 @@ const ReportPage = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="text-red-600 text-base bg-red-50 p-4 rounded-lg">
+            <div className="text-red-600 text-sm bg-red-50 p-4 rounded-xl border border-red-100">
               {error}
             </div>
           )}
@@ -200,15 +227,15 @@ const ReportPage = () => {
           <button
             onClick={handleExport}
             disabled={loading}
-            className="w-full py-4 px-6 bg-green-600 text-white rounded-lg text-lg font-medium 
-                     flex items-center justify-center gap-3 hover:bg-green-700 
-                     disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-green-600 text-white rounded-xl text-sm font-medium 
+                     flex items-center justify-center gap-2 hover:bg-green-700 
+                     disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
               "Generating..."
             ) : (
               <>
-                <Download size={24} />
+                <Download className="w-4 h-4" />
                 Export to Excel
               </>
             )}
