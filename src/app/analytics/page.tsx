@@ -24,6 +24,7 @@ import {
   Legend,
 } from "recharts";
 import { fetchMonthlyAnalytics } from "@/lib/services/analytics.service";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 // Add more colors as needed
 const CATEGORY_COLORS = {
@@ -41,12 +42,15 @@ const getCategoryColor = (category: string) => {
   );
 };
 
-const formatCurrency = (amount: number) => {
-  return `$${Math.abs(amount).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
+function FormatCurrency(amount: number) {
+  const { formatAmount } = useUserPreferences();
+  // return `$${Math.abs(amount).toLocaleString("en-IN", {
+  //   minimumFractionDigits: 2,
+  //   maximumFractionDigits: 2,
+  // })}`;
+
+  return formatAmount(amount);
+}
 
 // Separate component for category breakdown
 const CategoryBreakdown = ({ data, type }) => {
@@ -107,7 +111,7 @@ const CategoryBreakdown = ({ data, type }) => {
                   type === "expense" ? "text-red-600" : "text-green-600"
                 }`}
               >
-                {formatCurrency(category.value)}
+                {FormatCurrency(category.value)}
               </span>
             </div>
             <div className="relative pt-1">
@@ -173,7 +177,7 @@ const CombinedFlowChart = ({ data }) => {
           <XAxis dataKey="date" stroke="#64748b" />
           <YAxis stroke="#64748b" />
           <Tooltip
-            formatter={(value) => formatCurrency(Number(value))}
+            formatter={(value) => FormatCurrency(Number(value))}
             labelFormatter={(label) => `Day ${label}`}
             contentStyle={{
               backgroundColor: "white",
@@ -301,7 +305,7 @@ const AnalyticsPage = () => {
                 </span>
               </div>
               <div className="text-lg font-semibold text-red-600">
-                {formatCurrency(data?.expense || 0)}
+                {FormatCurrency(data?.expense || 0)}
               </div>
             </div>
 
@@ -316,7 +320,7 @@ const AnalyticsPage = () => {
                 </span>
               </div>
               <div className="text-lg font-semibold text-green-600">
-                {formatCurrency(data?.income || 0)}
+                {FormatCurrency(data?.income || 0)}
               </div>
             </div>
 
@@ -335,7 +339,7 @@ const AnalyticsPage = () => {
                   data?.total >= 0 ? "text-green-600" : "text-red-600"
                 }`}
               >
-                {formatCurrency(data?.total || 0)}
+                {FormatCurrency(data?.total || 0)}
               </div>
             </div>
           </div>

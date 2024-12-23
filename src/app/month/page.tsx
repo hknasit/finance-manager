@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
@@ -9,6 +10,11 @@ import {
   Filter,
   CreditCard,
   Wallet,
+  TrendingDown,
+  TrendingUp,
+  BadgeDollarSign,
+  ArrowDownRight,
+  ArrowUpRight,
 } from "lucide-react";
 import { TransactionDetails } from "./TransactionDetails";
 import { FilterPanel } from "./FilterPanel";
@@ -221,115 +227,146 @@ export default function MonthlyTransactionsView() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-white shadow-sm">
-        <div className="max-w-2xl mx-auto">
-          <div className="px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigateMonth("prev")}
-                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
-              >
-                <ChevronLeft className="w-6 h-6 text-slate-600" />
-              </button>
-              <h2 className="text-xl font-semibold text-slate-900">
-                {selectedDate.toLocaleString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </h2>
-              <button
-                onClick={() => navigateMonth("next")}
-                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
-              >
-                <ChevronRight className="w-6 h-6 text-slate-600" />
-              </button>
-            </div>
+    {/* Header */}
+    Harsh
+    <div className="sticky top-0 z-20 w-full bg-white border-b border-slate-200">
+      <div className="w-full px-4 py-3">
+        {/* Month Navigation */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
             <button
-              onClick={() => setShowFilters(true)}
-              className="p-2 hover:bg-slate-100 rounded-xl transition-colors relative"
+              onClick={() => navigateMonth("prev")}
+              className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
             >
-              <Filter className="w-6 h-6 text-slate-600" />
-              {(filters.type !== "all" ||
-                filters.category !== "all" ||
-                filters.paymentMethod !== "all" ||
-                filters.startDate ||
-                filters.endDate) && (
-                <div className="absolute top-0 right-0 w-2 h-2 bg-green-600 rounded-full" />
-              )}
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-lg font-semibold text-slate-900">
+              {selectedDate.toLocaleString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
+            </h2>
+            <button
+              onClick={() => navigateMonth("next")}
+              className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+            >
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Summary */}
-          <div className="px-4 py-4 grid grid-cols-3 gap-4 border-t border-slate-200">
-            <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="text-xs font-medium text-slate-500 mb-1">
-                EXPENSE
+          <button
+            onClick={() => setShowFilters(true)}
+            className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+          >
+            <Filter className="w-5 h-5" />
+            {(filters.type !== "all" ||
+              filters.category !== "all" ||
+              filters.paymentMethod !== "all" ||
+              filters.startDate ||
+              filters.endDate) && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-green-600 rounded-full" />
+            )}
+          </button>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-3 gap-3 mt-3">
+          {/* Expense Card */}
+          <div className="bg-white p-3 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 bg-red-50 rounded-lg">
+                <TrendingDown className="w-4 h-4 text-red-600" />
               </div>
-              <div className="text-lg font-semibold text-red-600">
-                ${totals.expense.toLocaleString()}
-              </div>
+              <span className="text-xs font-medium text-slate-600">EXPENSE</span>
             </div>
-            <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="text-xs font-medium text-slate-500 mb-1">
-                INCOME
-              </div>
-              <div className="text-lg font-semibold text-green-600">
-                ${totals.income.toLocaleString()}
-              </div>
+            <div className="text-lg font-semibold text-red-600">
+              ${totals.expense.toLocaleString()}
             </div>
-            <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="text-xs font-medium text-slate-500 mb-1">
-                TOTAL
+          </div>
+
+          {/* Income Card */}
+          <div className="bg-white p-3 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 bg-green-50 rounded-lg">
+                <TrendingUp className="w-4 h-4 text-green-600" />
               </div>
-              <div
-                className={`text-lg font-semibold ${
-                  totals.income - totals.expense >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
-                }`}
-              >
-                ${(totals.income - totals.expense).toLocaleString()}
+              <span className="text-xs font-medium text-slate-600">INCOME</span>
+            </div>
+            <div className="text-lg font-semibold text-green-600">
+              ${totals.income.toLocaleString()}
+            </div>
+          </div>
+
+          {/* Total Card */}
+          <div className="bg-white p-3 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 bg-blue-50 rounded-lg">
+                <BadgeDollarSign className="w-4 h-4 text-blue-600" />
               </div>
+              <span className="text-xs font-medium text-slate-600">TOTAL</span>
+            </div>
+            <div className={`text-lg font-semibold ${
+              totals.income - totals.expense >= 0 
+                ? "text-green-600" 
+                : "text-red-600"
+            }`}>
+              ${(totals.income - totals.expense).toLocaleString()}
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      {/* Transactions List */}
-      <div className="max-w-2xl mx-auto bg-white shadow-sm mt-4">
-        {!transactions.length ? (
-          <div className="py-12 text-center text-slate-500">
-            No transactions for this month
-          </div>
-        ) : !filteredTransactions.length ? (
-          <div className="py-12 text-center text-slate-500">
-            No transactions match the selected filters
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-200">
-            {Object.entries(sortedGroupedTransactions).map(
-              //@ts-ignore
-              ([dateKey, { formattedDate, transactions }]) => (
-                <div key={dateKey}>
-                  <div className="sticky top-[137px] px-4 py-3 bg-slate-100 border-y border-slate-200 z-10">
-                    <div className="text-sm font-medium text-slate-700">
-                      {formattedDate}
-                    </div>
+    {/* Transactions List - Removed extra spacing */}
+    <div className="bg-white w-full">
+      {!transactions.length ? (
+        <div className="py-12 text-center text-slate-500">
+          <BadgeDollarSign className="w-12 h-12 mx-auto text-slate-400 mb-3" />
+          <p>No transactions for this month</p>
+        </div>
+      ) : !filteredTransactions.length ? (
+        <div className="py-12 text-center text-slate-500">
+          No transactions match the selected filters
+        </div>
+      ) : (
+        <div>
+          {Object.entries(sortedGroupedTransactions).map(
+            ([dateKey, { formattedDate, transactions }]: any) => (
+              <div key={dateKey}>
+                <div className="sticky top-[120px] px-4 py-2 bg-slate-50 border-y border-slate-200 z-10">
+                  <div className="text-sm font-medium text-slate-700">
+                    {formattedDate}
                   </div>
-                  <div>
-                    {transactions.map((transaction: Transaction) => (
-                      <button
-                        key={transaction._id}
-                        className="w-full px-4 py-4 flex items-start justify-between hover:bg-slate-50 transition-colors"
-                        onClick={() => setSelectedTransaction(transaction)}
-                      >
-                        <div className="flex flex-col items-start">
-                          <div className="font-medium text-slate-900 mb-1">
+                </div>
+                <div>
+                  {transactions.map((transaction: Transaction) => (
+                    <button
+                      key={transaction._id}
+                      onClick={() => setSelectedTransaction(transaction)}
+                      className="w-full px-4 py-3 flex items-center hover:bg-slate-50 transition-all border-b border-slate-100 last:border-b-0"
+                    >
+                      {/* Icon */}
+                      <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg ${
+                        transaction.type === "expense" 
+                          ? "bg-red-50 text-red-600" 
+                          : "bg-green-50 text-green-600"
+                      }`}>
+                        {transaction.type === "expense" ? (
+                          <TrendingDown className="w-5 h-5" />
+                        ) : (
+                          <TrendingUp className="w-5 h-5" />
+                        )}
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="ml-3 flex-1 flex items-center justify-between min-w-0">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <span className="font-medium text-slate-900 truncate">
                             {transaction.description || transaction.category}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 rounded-lg text-xs font-medium text-slate-600">
+                          </span>
+                          {/* Desktop view tags */}
+                          <div className="hidden sm:flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-full text-xs font-medium text-slate-600">
                               {transaction.paymentMethod === "card" ? (
                                 <CreditCard className="w-3 h-3" />
                               ) : (
@@ -337,48 +374,71 @@ export default function MonthlyTransactionsView() {
                               )}
                               {transaction.paymentMethod}
                             </span>
-                            <span className="inline-flex items-center px-2 py-1 bg-slate-100 rounded-lg text-xs font-medium text-slate-600">
+                            <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 rounded-full text-xs font-medium text-slate-600">
                               {transaction.category}
                             </span>
                           </div>
+                          {/* Mobile view tags */}
+                          <div className="flex sm:hidden flex-col gap-1">
+                            <div className="flex items-center gap-1">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-lg text-xs font-medium text-slate-600">
+                                {transaction.paymentMethod === "card" ? (
+                                  <CreditCard className="w-3 h-3" />
+                                ) : (
+                                  <Wallet className="w-3 h-3" />
+                                )}
+                                {transaction.paymentMethod}
+                              </span>
+                              <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 rounded-lg text-xs font-medium text-slate-600">
+                                {transaction.category}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div
-                          className={`text-base font-semibold ${
-                            transaction.type === "expense"
-                              ? "text-red-600"
-                              : "text-green-600"
-                          }`}
-                        >
+                        
+                        <div className={`ml-3 text-base font-semibold whitespace-nowrap ${
+                          transaction.type === "expense"
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}>
                           {transaction.type === "expense" ? "-" : "+"}$
                           {transaction.amount.toLocaleString()}
                         </div>
-                      </button>
-                    ))}
-                  </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              )
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Filter Panel */}
-      {showFilters && (
-        <FilterPanel
-          onClose={() => setShowFilters(false)}
-          filters={filters}
-          setFilters={setFilters}
-         
-        />
-      )}
-
-      {/* Transaction Details Modal */}
-      {selectedTransaction && (
-        <TransactionDetails
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
+              </div>
+            )
+          )}
+        </div>
       )}
     </div>
+
+    {/* Filter Panel */}
+    {showFilters && (
+      <FilterPanel
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        setFilters={setFilters}
+      />
+    )}
+
+    {/* Transaction Details Modal */}
+    {selectedTransaction && (
+      <TransactionDetails
+        transaction={selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
+      />
+    )}
+
+    {/* FAB */}
+    <button 
+      className="fixed bottom-6 right-6 w-14 h-14 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-700 transition-all focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+      onClick={() => {/* Add your new transaction handler */}}
+    >
+      <span className="text-2xl">+</span>
+    </button>
+  </div>
   );
 }

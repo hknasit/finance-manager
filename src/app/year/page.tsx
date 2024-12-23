@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCategories } from "@/contexts/CategoryContext";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import {
   ChevronLeft,
   ChevronRight,
@@ -34,6 +35,7 @@ export default function TransactionDashboard() {
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const { isAuthenticated } = useAuth();
   const { categories } = useCategories();
+  const { formatAmount } = useUserPreferences();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -83,11 +85,7 @@ export default function TransactionDashboard() {
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(amount || 0);
+    return formatAmount(amount);
   };
 
   // Calculate yearly totals

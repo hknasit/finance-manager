@@ -26,7 +26,7 @@ export default function TransactionInput({
   const { isAuthenticated } = useAuth();
   const [description, setDescription] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
-  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [error, setError] = useState("");
   const [showCategories, setShowCategories] = useState(false);
   const [transactionDate, setTransactionDate] = useState(new Date());

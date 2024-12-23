@@ -7,7 +7,8 @@ import { jwtDecode } from "jwt-decode";
 interface User {
   username: string;
   userId: string;
-  exp: number;
+  email : string;
+  exp : number
 }
 
 interface AuthContextType {

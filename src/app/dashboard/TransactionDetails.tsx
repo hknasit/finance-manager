@@ -1,9 +1,10 @@
 "use clinet";
 // components/TransactionDetails.tsx
 
-import React from 'react';
-import { Transaction } from '@/types/transaction';
+import React from "react";
+import { Transaction } from "@/types/transaction";
 import { X, Pencil, Trash2, CreditCard, Wallet } from "lucide-react";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 interface TransactionDetailsProps {
   transaction: Transaction;
@@ -18,13 +19,18 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const { formatAmount } = useUserPreferences();
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-25 flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-xl overflow-hidden shadow-xl">
         {/* Header */}
-        <div className={`p-6 ${transaction.type === "expense" ? "bg-red-600" : "bg-green-600"} text-white`}>
+        <div
+          className={`p-6 ${
+            transaction.type === "expense" ? "bg-red-600" : "bg-green-600"
+          } text-white`}
+        >
           <div className="flex justify-between items-start mb-6">
-            <button 
+            <button
               onClick={onClose}
               className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
             >
@@ -32,7 +38,7 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
             </button>
             <div className="flex gap-2">
               {onEdit && (
-                <button 
+                <button
                   onClick={() => onEdit(transaction._id)}
                   className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
                 >
@@ -40,7 +46,7 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
                 </button>
               )}
               {onDelete && (
-                <button 
+                <button
                   onClick={() => onDelete(transaction._id)}
                   className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
                 >
@@ -51,7 +57,8 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
           </div>
           <div className="text-center">
             <div className="text-4xl font-bold mb-2">
-              {transaction.type === "expense" ? "-" : "+"}₹{transaction.amount.toLocaleString()}
+              {transaction.type === "expense" ? "-" : "+"}
+              {formatAmount(transaction.amount)}
             </div>
             <div className="text-sm text-white/90">
               {new Date(transaction.date).toLocaleString("en-US", {
@@ -70,7 +77,9 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
         {/* Details */}
         <div className="p-6 space-y-6">
           <div>
-            <div className="text-sm font-medium text-slate-600 mb-2">Account</div>
+            <div className="text-sm font-medium text-slate-600 mb-2">
+              Account
+            </div>
             <div className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-xl text-slate-700 font-medium">
               {transaction.paymentMethod === "card" ? (
                 <CreditCard className="w-4 h-4" />
@@ -82,7 +91,9 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
           </div>
 
           <div>
-            <div className="text-sm font-medium text-slate-600 mb-2">Category</div>
+            <div className="text-sm font-medium text-slate-600 mb-2">
+              Category
+            </div>
             <div className="inline-flex items-center px-3 py-2 bg-slate-100 rounded-xl text-slate-700 font-medium">
               {transaction.category}
             </div>
@@ -90,14 +101,18 @@ export const TransactionDetails: React.FC<TransactionDetailsProps> = ({
 
           {transaction.description && (
             <div>
-              <div className="text-sm font-medium text-slate-600 mb-2">Description</div>
+              <div className="text-sm font-medium text-slate-600 mb-2">
+                Description
+              </div>
               <div className="text-slate-900">{transaction.description}</div>
             </div>
           )}
 
           {transaction.notes && (
             <div>
-              <div className="text-sm font-medium text-slate-600 mb-2">Notes</div>
+              <div className="text-sm font-medium text-slate-600 mb-2">
+                Notes
+              </div>
               <div className="text-slate-900">{transaction.notes}</div>
             </div>
           )}

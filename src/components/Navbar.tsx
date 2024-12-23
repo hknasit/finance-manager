@@ -29,7 +29,7 @@ export default function Navbar() {
     },
     {
       name: "Year",
-      href: "/spreadsheet",
+      href: "/year",
       icon: Calendar1,
       description: "Yearly records",
     },
@@ -116,7 +116,8 @@ export default function Navbar() {
 
                     {/* User Profile - Desktop */}
                     <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2" >
+                        <Link href="/profile" className="p-2 rounded-lg text-slate-600 hover:bg-slate-50 flex items-center gap-2">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                           <span className="text-blue-700 font-medium">
                             {user?.username?.charAt(0)?.toUpperCase() || "U"}
@@ -127,6 +128,7 @@ export default function Navbar() {
                             {user?.username || "User"}
                           </span>
                         </div>
+                        </Link>
                       </div>
 
                       <button
@@ -151,6 +153,7 @@ export default function Navbar() {
                       {isMobileMenuOpen ? (
                         <User className="h-6 w-6" />
                       ) : (
+                        
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                             <span className="text-blue-700 font-medium">
@@ -159,6 +162,7 @@ export default function Navbar() {
                           </div>
                           <ChevronDown className="h-4 w-4 text-slate-500" />
                         </div>
+                        
                       )}
                     </button>
 
@@ -166,20 +170,19 @@ export default function Navbar() {
                     {isMobileMenuOpen && (
                       <div className="absolute top-16 left-0 right-0 bg-white border-b border-slate-200 shadow-lg">
                         {/* Mobile User Profile */}
-                        <div className="px-4 py-3 border-b border-slate-100">
+                        <div className="px-6 py-3 border-b border-slate-100">
+                        <Link href="/profile" className="p-2 rounded-lg text-slate-600 hover:bg-slate-50 flex items-center gap-2">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                              <span className="text-blue-700 font-medium text-lg">
-                                {user?.username?.charAt(0)?.toUpperCase() ||
-                                  "U"}
-                              </span>
-                            </div>
+                            {/* <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center"> */}
+                            <User className="h-6 w-6" />
+                            {/* </div> */}
                             <div>
                               <div className="font-medium text-slate-900">
                                 {user?.username || "User"}
                               </div>
                             </div>
                           </div>
+                          </Link>
                         </div>
 
                         <div className="py-2 px-4 space-y-1">
@@ -223,14 +226,6 @@ export default function Navbar() {
                   </div>
                 </>
               ) : (
-                // Login Button for Non-authenticated Users
-                // <Link
-                //   href="/login"
-                //   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                // >
-                //   <LogIn className="h-4 w-4" />
-                //   <span>Sign in</span>
-                // </Link>
                 <></>
               )}
             </div>

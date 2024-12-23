@@ -20,6 +20,7 @@ import { TransactionDetails } from "./TransactionDetails";
 import { FilterPanel } from "./FilterPanel";
 import { useCategories } from "@/contexts/CategoryContext";
 import TransactionInput2 from "@/components/TransactionInput";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 interface Transaction {
   _id: string;
@@ -58,6 +59,7 @@ export default function MonthlyTransactionsView() {
   });
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const { categories } = useCategories();
+  const { formatAmount, getCurrencySymbol } = useUserPreferences();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -283,7 +285,7 @@ export default function MonthlyTransactionsView() {
                 </span>
               </div>
               <div className="text-lg font-semibold text-red-600">
-                ${totals.expense.toLocaleString()}
+                {formatAmount(totals.expense)}
               </div>
             </div>
 
@@ -298,7 +300,7 @@ export default function MonthlyTransactionsView() {
                 </span>
               </div>
               <div className="text-lg font-semibold text-green-600">
-                ${totals.income.toLocaleString()}
+                {formatAmount(totals.income)}
               </div>
             </div>
 
@@ -319,7 +321,7 @@ export default function MonthlyTransactionsView() {
                     : "text-red-600"
                 }`}
               >
-                ${(totals.income - totals.expense).toLocaleString()}
+                {formatAmount(totals.income - totals.expense)}
               </div>
             </div>
           </div>
@@ -414,8 +416,8 @@ export default function MonthlyTransactionsView() {
                                 : "text-green-600"
                             }`}
                           >
-                            {transaction.type === "expense" ? "-" : "+"}$
-                            {transaction.amount.toLocaleString()}
+                            {transaction.type === "expense" ? "-" : "+"}
+                            { formatAmount(transaction.amount)}
                           </div>
                         </div>
                       </button>
