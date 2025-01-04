@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { connectDB } from "@/lib/db";
 import User from "@/models/user.model";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
     const { name, email, password } = await request.json();
 
-    // Validate input
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -16,10 +17,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Connect to database
     await connectDB();
 
-    // Check if user already exists
+     // Generate verification token
+     const verificationToken = crypto.randomBytes(32).toString("hex");
+     const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, verificationToken);
+    } catch (error) {
+      console.error("Error sending verification email:", error);
+      throw new Error("Error sending verification email");
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
@@ -28,26 +38,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash password
+   
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
+      verificationToken,
+      verificationTokenExpiry,
+      isVerified: false,
     });
 
-    // Remove password from response
     const userWithoutPassword = {
       _id: user._id,
       name: user.name,
       email: user.email,
+      isVerified: user.isVerified,
     };
 
     return NextResponse.json(
       {
-        message: "User registered successfully",
+        message:
+          "User registered successfully. Please check your email to verify your account.",
         user: userWithoutPassword,
       },
       { status: 201 }

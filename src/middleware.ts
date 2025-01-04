@@ -6,6 +6,7 @@ const PUBLIC_PATHS = [
   `/register`,
   `/forgot-password`,
   `/reset-password`,
+  `/verify-email`,
 ];
 
 const isPublicPath = (pathname) => {

@@ -61,6 +61,9 @@ const userSchema = new mongoose.Schema({
   },
   resetToken: String,
   resetTokenExpiry: Date,
+  isVerified: { type: Boolean, default: false },
+  verificationToken: String,
+  verificationTokenExpiry: Date,
   spreadsheetId: String,
   spreadsheetUrl: String,
 });

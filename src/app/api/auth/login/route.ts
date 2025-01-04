@@ -1,54 +1,57 @@
 // app/api/auth/login/route.ts
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import User from "@/models/user.model";
 import { connectDB } from "@/lib/db";
+import User from "@/models/user.model";
+import { createToken } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
+
     await connectDB();
+
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid credentials" },
+        { error: "Invalid email or password" },
         { status: 401 }
       );
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
+    // Check if email is verified
+    if (!user.isVerified) {
       return NextResponse.json(
-        { error: "Invalid credentials" },
+        { 
+          error: "Please verify your email before logging in",
+          isVerificationError: true,
+          email: user.email 
+        },
         { status: 401 }
       );
     }
 
-    // Create JWT token
-    const token = jwt.sign(
-      {
-        username: user.name,
-        email: user.email,
-        id: user._id,
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: "24h" } // Token expires in 24 hours
-    );
-    const response = NextResponse.json({ token, message: "Login successful" });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
 
-    response.cookies.set({
-      name: "auth-token",
-      value: token,
-      httpOnly: false,
-      // secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 24 hours
+    const token = await createToken({
+      userId: user._id,
+      email: user.email,
+      name: user.name,
+      isVerified: user.isVerified
     });
 
-    return response;
+    return NextResponse.json({ token });
   } catch (error) {
     console.error("Login error:", error);
-    return NextResponse.json({ error: "Login failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
