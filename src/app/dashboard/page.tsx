@@ -82,7 +82,7 @@ export default function MonthlyTransactionsView() {
       }
 
       const data = await response.json();
-      console.log("Fetched transactions:", data.transactions);
+  
       setTransactions(data || []); // Provide default empty array
       setError(null);
     } catch (err) {
@@ -96,11 +96,11 @@ export default function MonthlyTransactionsView() {
     }
   };
 
-  useEffect(() => {
-    console.log("Current transactions:", transactions);
-    console.log("Filtered transactions:", filteredTransactions);
-    console.log("Grouped transactions:", groupedTransactions);
-  }, [transactions, filters]);
+  // useEffect(() => {
+  //   console.log("Current transactions:", transactions);
+  //   console.log("Filtered transactions:", filteredTransactions);
+  //   console.log("Grouped transactions:", groupedTransactions);
+  // }, [transactions, filters]);
 
   // Filter transactions with improved logging
   const filteredTransactions = transactions.filter((transaction) => {
@@ -128,12 +128,12 @@ export default function MonthlyTransactionsView() {
         dateMatch && new Date(transaction.date) <= new Date(filters.endDate);
     }
 
-    console.log(`Transaction ${transaction._id} matches:`, {
-      typeMatch,
-      categoryMatch,
-      paymentMatch,
-      dateMatch,
-    });
+    // console.log(`Transaction ${transaction._id} matches:`, {
+    //   typeMatch,
+    //   categoryMatch,
+    //   paymentMatch,
+    //   dateMatch,
+    // });
 
     return typeMatch && categoryMatch && paymentMatch && dateMatch;
   });

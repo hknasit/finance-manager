@@ -21,6 +21,7 @@ export async function GET() {
       email: verified.email,
       currency: preferences?.currency || "USD",
       cashBalance: preferences?.cashBalance || 0,
+      bankBalance: preferences?.bankBalance || 0,
       defaultTransactionType: preferences?.defaultTransactionType || "expense",
       defaultPaymentMethod: preferences?.defaultPaymentMethod || "card",
     });
@@ -61,6 +62,7 @@ export async function PUT(request: NextRequest) {
         user: verified.id,
         currency: data.currency,
         cashBalance: data.cashBalance,
+        bankBalance: data.bankBalance,
         defaultTransactionType: data.defaultTransactionType,
         defaultPaymentMethod: data.defaultPaymentMethod,
       },

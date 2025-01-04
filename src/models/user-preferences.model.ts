@@ -16,6 +16,10 @@ const userPreferenceSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    bankBalance: {
+      type: Number,
+      default: 0,
+    },
     defaultTransactionType: {
       type: String,
       enum: ["income", "expense"],

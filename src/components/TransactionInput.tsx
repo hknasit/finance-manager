@@ -16,6 +16,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -121,14 +122,8 @@ export default function TransactionInput({
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  console.log(
-    "dayjs::: ",
-    transactionDate,
-    " new Date()::: ",
-    new Date(),
-    " ISO::: ",
-    transactionDate.toISOString()
-  );
+  const { preferences, setPreferences } = useUserPreferences();
+
   // Close category dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -204,7 +199,11 @@ export default function TransactionInput({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(transactionData),
+          body: JSON.stringify({
+            ...transactionData,
+            currentBankBalance: preferences.bankBalance,
+            currentCashBalance: preferences.cashBalance,
+          }),
         }
       );
 
@@ -212,11 +211,21 @@ export default function TransactionInput({
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to save transaction");
       }
-      const newTransaction = await response.json();
+
+      // update new balance in context
+      const data = await response.json();
+
+      setPreferences((prev) => ({
+        ...prev,
+        bankBalance: data.balances.bankBalance,
+        cashBalance: data.balances.cashBalance
+      }))
+
+      // const newTransaction = await response.json();
       //@ts-ignore
       setTransactions((prevTransactions: Transaction[]) => [
         ...prevTransactions,
-        newTransaction.transaction,
+        data.transaction,
       ]);
       setAmount("");
       setDescription("");

@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
         currency: "USD",
         defaultTransactionType: "expense",
         defaultPaymentMethod: "cash",
+        bankBalance: 0,
         cashBalance: 0,
         theme: "light",
       });
@@ -68,6 +69,7 @@ export async function PUT(request: NextRequest) {
           defaultTransactionType: data.defaultTransactionType,
           defaultPaymentMethod: data.defaultPaymentMethod,
           cashBalance: data.cashBalance,
+          bankBalance: data.bankBalance,
           theme: data.theme,
         },
       },

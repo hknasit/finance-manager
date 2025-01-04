@@ -13,9 +13,11 @@ import { useAuth } from "./AuthContext";
 interface UserPreferences {
   currency: string;
   cashBalance: number;
+  bankBalance: number;
   defaultTransactionType: "income" | "expense";
   defaultPaymentMethod: "card" | "cash";
 }
+
 
 interface CurrencyFormat {
   symbol: string;
@@ -24,6 +26,7 @@ interface CurrencyFormat {
 
 interface UserPreferencesContextType {
   preferences: UserPreferences;
+  setPreferences: (any) => void;
   loading: boolean;
   error: string | null;
   formatAmount: (amount: number) => string;
@@ -37,6 +40,7 @@ interface UserPreferencesContextType {
 const defaultPreferences: UserPreferences = {
   currency: "USD",
   cashBalance: 0,
+  bankBalance: 0,
   defaultTransactionType: "expense",
   defaultPaymentMethod: "card",
 };
@@ -113,6 +117,7 @@ export function UserPreferencesProvider({
         ...prev,
         currency: data.currency || prev.currency,
         cashBalance: data.cashBalance ?? prev.cashBalance,
+        bankBalance: data.bankBalance ?? prev.bankBalance,
         defaultTransactionType:
           data.defaultTransactionType || prev.defaultTransactionType,
         defaultPaymentMethod:
@@ -202,6 +207,7 @@ export function UserPreferencesProvider({
     <UserPreferencesContext.Provider
       value={{
         preferences,
+        setPreferences,
         loading,
         error,
         formatAmount,

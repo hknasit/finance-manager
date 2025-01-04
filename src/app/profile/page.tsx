@@ -30,6 +30,7 @@ export default function ProfilePage() {
     name: user?.username || "",
     email: user?.email || "",
     cashBalance: preferences?.cashBalance || 0,
+    bankBalance: preferences?.bankBalance || 0,
     defaultTransactionType: preferences?.defaultTransactionType || "expense",
     defaultPaymentMethod: preferences?.defaultPaymentMethod || "card",
   });
@@ -41,25 +42,28 @@ export default function ProfilePage() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${NEXT_PUBLIC_BASE_PATH}/api/user/profile`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include", // Important for sending cookies
-          body: JSON.stringify({ ...formData, id: user?.userId }),
-        }
-      );
+      await updatePreferences({
+        ...formData,
+      });
+      // const response = await fetch(
+      //   `${NEXT_PUBLIC_BASE_PATH}/api/user/profile`,
+      //   {
+      //     method: "PUT",
+      //     headers: { "Content-Type": "application/json" },
+      //     credentials: "include", // Important for sending cookies
+      //     body: JSON.stringify({ ...formData, id: user?.userId }),
+      //   }
+      // );
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push("/login");
-          return;
-        }
-        throw new Error("Failed to update profile");
-      }
-      const data = await response.json();
-      setFormData(data);
+      // if (!response.ok) {
+      //   if (response.status === 401) {
+      //     router.push("/login");
+      //     return;
+      //   }
+      //   throw new Error("Failed to update profile");
+      // }
+      // const data = await response.json();
+      // setFormData(data);
 
       setSuccess("Profile updated successfully!");
     } catch (err) {
@@ -131,7 +135,7 @@ export default function ProfilePage() {
                 </span>
               </div>
               <div className="text-sm font-semibold text-slate-900">
-                ${formData.cashBalance.toLocaleString()}
+                ${formData.cashBalance + formData.bankBalance}
               </div>
             </div>
 
@@ -211,22 +215,47 @@ export default function ProfilePage() {
 
               <div className="space-y-4">
                 <CurrencyPreferences />
-                <div>
-                  <label className="block text-sm text-slate-600 mb-1">
-                    Cash Balance
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.cashBalance}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        cashBalance: parseFloat(e.target.value),
-                      }))
-                    }
-                    className="w-full p-3 border border-slate-200 rounded-xl focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-colors"
-                    placeholder="0.00"
-                  />
+                <div className="p-4">
+                  <h3 className="text-sm font-medium text-slate-900 mb-4">
+                    Balance Settings
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">
+                        Cash Balance
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.cashBalance}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            cashBalance: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-colors"
+                        placeholder="0.00"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">
+                        Bank Balance
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.bankBalance}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            bankBalance: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-colors"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div>

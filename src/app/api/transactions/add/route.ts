@@ -9,6 +9,7 @@ import fs from "fs";
 import { z } from "zod";
 import { GoogleSheetsService } from "@/lib/googleSheets";
 import User from "@/models/user.model";
+import { UserPreference } from "@/models/user-preferences.model";
 
 // Transaction validation schema
 const TransactionSchema = z.object({
@@ -49,7 +50,6 @@ async function getOrCreateWorkbook(userId: string): Promise<ExcelJS.Workbook> {
 
 export async function POST(req: Request) {
   try {
-    // Verify authentication first
     const authPayload = await verifyAuth();
     const userId = authPayload.id;
 
@@ -59,89 +59,94 @@ export async function POST(req: Request) {
 
     await connectDB();
 
-    // Parse and validate request body
-    let transaction;
-    try {
-      const body = await req.json();
-      transaction = TransactionSchema.parse(body);
-    } catch (error) {
-      console.error("Validation error:", error);
-      if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { message: "Invalid transaction data", errors: error.errors },
-          { status: 400 }
-        );
-      }
+    const body = await req.json();
+    const { 
+      type, 
+      category, 
+      amount, 
+      description, 
+      date, 
+      paymentMethod,
+      currentCashBalance,
+      currentBankBalance 
+    } = body;
+
+    // Convert values to numbers and validate
+    const numAmount = Number(amount);
+    const numCashBalance = Number(currentCashBalance);
+    const numBankBalance = Number(currentBankBalance);
+
+    if (isNaN(numAmount) || numAmount <= 0) {
       return NextResponse.json(
-        { message: "Invalid request data" },
+        { message: "Invalid amount" },
         { status: 400 }
       );
     }
 
-    // Save to MongoDB
-    const newTransaction = new Transaction({
+    if (isNaN(numCashBalance) || isNaN(numBankBalance)) {
+      return NextResponse.json(
+        { message: "Invalid balance values" },
+        { status: 400 }
+      );
+    }
+
+    // Calculate new balances
+    let newCashBalance = numCashBalance;
+    let newBankBalance = numBankBalance;
+
+    if (paymentMethod === 'cash') {
+      newCashBalance = type === 'income' 
+        ? numCashBalance + numAmount 
+        : numCashBalance - numAmount;
+    } else {
+      newBankBalance = type === 'income'
+        ? numBankBalance + numAmount
+        : numBankBalance - numAmount;
+    }
+
+    // Validate resulting balances aren't negative
+    if (newCashBalance < 0 || newBankBalance < 0) {
+      return NextResponse.json(
+        { message: "Insufficient balance" },
+        { status: 400 }
+      );
+    }
+
+    // Update user preferences
+    await UserPreference.findOneAndUpdate(
+      { user: userId },
+      { 
+        $set: { 
+          cashBalance: newCashBalance,
+          bankBalance: newBankBalance
+        } 
+      },
+      { new: true }
+    );
+
+    const newTransaction = await Transaction.create({
       user: userId,
-      ...transaction,
-      date: new Date(transaction.date),
+      type,
+      category,
+      amount: numAmount,
+      description,
+      date: new Date(date),
+      paymentMethod
     });
-
-    await newTransaction.save();
-
-    // Get or create Google Sheet
-    // const sheetsService = new GoogleSheetsService();
-    // const user = await User.findById(userId);
-
-    // if (!user.spreadsheetId) {
-    //   // Create new spreadsheet if user doesn't have one
-    //   const spreadsheetId = await sheetsService.createNewSpreadsheet(userId);
-    //   const spreadsheetUrl = await sheetsService.getSpreadsheetUrl(
-    //     spreadsheetId
-    //   );
-
-    //   user.spreadsheetId = spreadsheetId;
-    //   user.spreadsheetUrl = spreadsheetUrl;
-    //   await user.save();
-    // }
-    // await sheetsService.addTransaction(user.spreadsheetId, transaction);
-    
-
-    // // Get or create Excel workbook
-    // const workbook = await getOrCreateWorkbook(userId);
-
-    // // Get the correct month sheet
-    // const transactionDate = new Date(transaction.date);
-    // const monthName = transactionDate.toLocaleString("default", {
-    //   month: "long",
-    // });
-    // const monthSheet = workbook.getWorksheet(monthName);
-
-    // if (!monthSheet) {
-    //   return NextResponse.json(
-    //     { message: "Invalid worksheet" },
-    //     { status: 400 }
-    //   );
-    // }
-
-    // // Use the new function to add transaction
-    // await addTransactionToSheet(monthSheet, transaction);
-
-    // // Save Excel file
-    // const filePath = path.join(
-    //   process.cwd(),
-    //   "data",
-    //   "users",
-    //   `${userId}.xlsx`
-    // );
-    // await workbook.xlsx.writeFile(filePath);
 
     return NextResponse.json({
       message: "Transaction saved successfully",
       transaction: newTransaction,
+      balances: {
+        cashBalance: newCashBalance,
+        bankBalance: newBankBalance
+      }
     });
+
   } catch (error) {
     console.error("Transaction error:", error);
     return NextResponse.json(
-      { message: "Internal server error", error: error.message },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }
@@ -203,7 +208,15 @@ export async function GET(req: Request) {
       .sort({ date: -1 })
       .limit(50);
 
-    return NextResponse.json({ transactions });
+    const userPreferences = await UserPreference.findOne({ user: userId });
+
+    return NextResponse.json({ 
+      transactions,
+      balances: {
+        cashBalance: userPreferences?.cashBalance || 0,
+        bankBalance: userPreferences?.bankBalance || 0
+      }
+    });
   } catch (error) {
     console.error("Error fetching transactions:", error);
     return NextResponse.json(
