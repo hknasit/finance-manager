@@ -34,7 +34,7 @@ export default function VerifyEmailContent() {
 
   const verifyEmail = async () => {
     try {
-      const response = await fetch(`/api/auth/verify-email?token=${token}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/auth/verify-email?token=${token}`);
       const data = await response.json();
 
       if (!response.ok) {
