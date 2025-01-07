@@ -2,10 +2,16 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/user.model";
 
-export async function GET(request: Request) {
+interface Params {
+  params: Promise<{
+    token: string;
+  }>;
+}
+
+export async function GET(request: Request, params: Params) {
   try {
-    const { searchParams } = new URL(request.url);
-    const token = searchParams.get('token');
+    const { token } = await params.params;
+    console.log(token);
 
     if (!token) {
       return NextResponse.json(
@@ -18,7 +24,7 @@ export async function GET(request: Request) {
 
     const user = await User.findOne({
       verificationToken: token,
-      verificationTokenExpiry: { $gt: Date.now() },
+      // verificationTokenExpiry: { $gt: Date.now() }
     });
 
     if (!user) {

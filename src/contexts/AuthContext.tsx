@@ -6,9 +6,10 @@ import { jwtDecode } from "jwt-decode";
 
 interface User {
   username: string;
-  userId: string;
-  email : string;
-  exp : number
+  id: string;
+  email: string;
+  isVerified: boolean;
+  exp: number;
 }
 
 interface AuthContextType {
@@ -29,21 +30,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
-
   useEffect(() => {
     checkAuth();
-  }, []);
+  
+  },[]);
 
-  const getCookie = (name: string): string | null => {
-    return (
-      document.cookie
-        .split("; ")
-        .find((row) => row.startsWith(name + "="))
-        ?.split("=")[1] || null
-    );
-  };
-
-  const checkAuth = () => {
+  function checkAuth() {
     try {
       const token = getCookie("auth-token");
 
@@ -63,14 +55,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setUser(decoded);
+      console.log(decoded)
       setIsAuthenticated(true);
     } catch (error) {
       console.error("Auth check failed:", error);
       handleLogout();
     }
-  };
+  }
 
-  const login = async (email: string, password: string) => {
+
+  function getCookie(name: string): string | null {
+    return (
+      document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(name + "="))
+        ?.split("=")[1] || null
+    );
+  }
+
+  async function login(email: string, password: string) {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_PATH}/api/auth/login`,
@@ -99,17 +102,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Login error:", error);
       throw new Error(error);
     }
-  };
+  }
 
-  const handleLogout = () => {
+  function handleLogout() {
     // Clear the cookie with the same path and domain as it was set
     document.cookie =
       "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     setUser(null);
     setIsAuthenticated(false);
-  };
+  }
 
-  const logout = async () => {
+  async function logout() {
     try {
       await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/auth/logout`, {
         method: "POST",
@@ -121,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Logout error:", error);
       handleLogout();
     }
-  };
+  }
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>

@@ -11,7 +11,7 @@ import {
   CircularProgress,
   Button,
 } from "@mui/material";
-import { CheckCircleIcon, CrossIcon } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 
 export default function VerifyEmailContent() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -58,51 +58,43 @@ export default function VerifyEmailContent() {
     <Card sx={{ width: "100%", maxWidth: 480, boxShadow: 1 }}>
       <CardContent sx={{ p: 4, textAlign: "center" }}>
         {status === "loading" && (
-          <Box sx={{ my: 4 }}>
-            <CircularProgress size={48} sx={{ mb: 2 }} />
-            <Typography variant="h6">Verifying your email...</Typography>
-          </Box>
-        )}
+            <Box>
+              <CircularProgress sx={{ mb: 2 }} />
+              <Typography>Verifying your email...</Typography>
+            </Box>
+          )}
 
-        {status === "success" && (
-          <Box sx={{ my: 4 }}>
-            <CheckCircleIcon
-              color="success"
-              //   className={ "fontSize"= 48, "mb"= 2 }
-            />
-            <Typography variant="h6" color="success.main" gutterBottom>
-              Email Verified!
-            </Typography>
-            <Typography color="text.secondary" paragraph>
-              {message}
-            </Typography>
-            <Typography color="text.secondary">
-              Redirecting to login page...
-            </Typography>
-          </Box>
-        )}
+          {status === "error" && (
+            <Box>
+              <AlertCircle size={48} color="red" style={{ marginBottom: 16 }} />
+              <Typography variant="h5" color="error" gutterBottom>
+                Verification Failed
+              </Typography>
+              <Typography color="error.main" sx={{ mb: 3 }}>
+                {JSON.stringify(message)}
+              </Typography>
+              <Button variant="contained" onClick={() => router.push("/login")}>
+                Return to Login
+              </Button>
+            </Box>
+          )}
 
-        {status === "error" && (
-          <Box sx={{ my: 4 }}>
-            <CrossIcon
-              color="error"
-              //   sx={{ fontSize: 48, mb: 2 }}
-            />
-            <Typography variant="h6" color="error" gutterBottom>
-              Verification Failed
-            </Typography>
-            <Typography color="error" paragraph>
-              {message}
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => router.push("/login")}
-              sx={{ mt: 2 }}
-            >
-              Return to Login
-            </Button>
-          </Box>
-        )}
+          {status === "success" && (
+            <Box>
+              <CheckCircle
+                size={48}
+                color="green"
+                style={{ marginBottom: 16 }}
+              />
+              <Typography variant="h5" color="success.main" gutterBottom>
+                Email Verified Successfully
+              </Typography>
+              <Typography color="text.secondary">
+                Redirecting to login page...
+              </Typography>
+            </Box>
+          )}
+
       </CardContent>
     </Card>
   );

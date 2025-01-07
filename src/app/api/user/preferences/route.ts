@@ -6,21 +6,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { UserPreference } from "@/models/user-preferences.model";
 import { cookies } from "next/headers";
+import { verifyAuth } from "@/lib/auth";
 
 // GET user preferences
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    const cookiesObject = await cookies();
-    const token = cookiesObject.get("auth-token");
-
-    if (!token?.value) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const verified = await verifyAuth();
+       if (!verified) {
+         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+       }
+   
 
     const preferences = await UserPreference.findOne({
       // @ts-ignore
-      user: token?.value.userId,
+      user: verified.id,
     })
       .lean()
       .exec();
@@ -51,18 +51,16 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await connectDB();
-    const cookiesObject = await cookies();
-    const token = cookiesObject.get("auth-token");
-
-    if (!token?.value) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const verified = await verifyAuth();
+       if (!verified) {
+         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+       }
 
     const data = await request.json();
 
     const preferences = await UserPreference.findOneAndUpdate(
       // @ts-ignore
-      { user:token?.value.userId },
+      { user:verified.id },
       {
         $set: {
           currency: data.currency,

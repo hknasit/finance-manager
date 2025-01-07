@@ -1,37 +1,41 @@
-'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 
-import { Suspense } from 'react';
-import VerifyEmailContent from './VerifyEmailContent';
-import { CircularProgress, Container, Box } from '@mui/material';
+import { Suspense } from "react";
 
-export default function VerifyEmailPage() {
+import { Box, Container, CircularProgress } from "@mui/material";
+import VerifyEmailContent from "./VerifyEmailContent";
+
+export default function VerifyEmail() {
   return (
-    <Container 
-      maxWidth={false}
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-      }}
-    >
-      <Suspense
-        fallback={
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: '200px' 
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        }
+    <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <Box
+        sx={{
+          textAlign: "center",
+          p: 4,
+          bgcolor: "background.paper",
+          borderRadius: 1,
+          boxShadow: 1,
+        }}
       >
-        <VerifyEmailContent />
-      </Suspense>
+        <Suspense
+          fallback={
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: "200px",
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          }
+        >
+          
+          <VerifyEmailContent />
+        </Suspense>
+      </Box>
     </Container>
   );
 }

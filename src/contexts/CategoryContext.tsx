@@ -42,7 +42,7 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const sortAndGroupCategories = (categoriesArray: Category[]) => {
+  function sortAndGroupCategories(categoriesArray: Category[]) {
     const sorted = categoriesArray.reduce<{
       income: Category[];
       expense: Category[];
@@ -58,15 +58,16 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
     sorted.expense.sort((a, b) => a.name.localeCompare(b.name));
 
     return sorted;
-  };
+  }
 
-  const fetchCategories = async () => {
+  async function fetchCategories() {
     try {
       if (!isAuthenticated) return;
       setLoading(true);
       setError(null);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/user/categories`
+        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/user/categories`,
+        { credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to fetch categories");
 
@@ -78,9 +79,9 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const addCategory = async (name: string, type: "income" | "expense") => {
+  async function addCategory(name: string, type: "income" | "expense") {
     try {
       setError(null);
       const response = await fetch(
@@ -103,13 +104,13 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
       setError(err.message);
       throw err;
     }
-  };
+  }
 
-  const updateCategory = async (
+  async function updateCategory(
     id: string,
     name: string,
     type: "income" | "expense"
-  ) => {
+  ) {
     try {
       setError(null);
       const response = await fetch(
@@ -132,9 +133,9 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
       setError(err.message);
       throw err;
     }
-  };
+  }
 
-  const deleteCategory = async (id: string) => {
+  async function deleteCategory(id: string) {
     try {
       setError(null);
       const response = await fetch(
@@ -155,15 +156,47 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
       setError(err.message);
       throw err;
     }
-  };
+  }
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchCategories();
+    let mounted = true;
+
+    async function loadCategories() {
+      if (!isAuthenticated) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_PATH}/api/user/categories`, {
+            credentials: "include",}
+        );
+
+        if (!mounted) return;
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
+
+        const data = await response.json();
+        setCategories(sortAndGroupCategories(data.categories));
+      } catch (err) {
+        if (mounted) {
+          setError(err.message);
+          console.error("Error fetching categories:", err);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     }
-  }, []);
-  useEffect(() => {
-    fetchCategories();
+
+    loadCategories();
+
+    return () => {
+      mounted = false;
+    };
   }, [isAuthenticated]);
   return (
     <CategoryContext.Provider

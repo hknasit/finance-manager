@@ -8,16 +8,20 @@ import { verifyAuth } from "@/lib/auth";
 // GET - Fetch all categories
 export async function GET() {
   try {
-    const payload = await verifyAuth();
+    const verified = await verifyAuth();
+    if (!verified) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     await connectDB();
-    const userId = payload.id;
 
-    const user = await User.findById(userId);
+    const user = await User.findById(verified.id);
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({ categories: user.categories || [] });
+    // return NextResponse.json({categories:[]});
   } catch (error) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(

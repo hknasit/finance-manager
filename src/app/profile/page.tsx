@@ -15,16 +15,13 @@ import {
 } from "lucide-react";
 import CurrencyPreferences from "./CurrencyPreferences";
 
-const NEXT_PUBLIC_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH;
-
 export default function ProfilePage() {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const { updatePreferences, refreshPreferences, preferences } =
-    useUserPreferences();
+  const { updatePreferences, preferences } = useUserPreferences();
 
   const [formData, setFormData] = useState({
     name: user?.username || "",
@@ -45,25 +42,6 @@ export default function ProfilePage() {
       await updatePreferences({
         ...formData,
       });
-      // const response = await fetch(
-      //   `${NEXT_PUBLIC_BASE_PATH}/api/user/profile`,
-      //   {
-      //     method: "PUT",
-      //     headers: { "Content-Type": "application/json" },
-      //     credentials: "include", // Important for sending cookies
-      //     body: JSON.stringify({ ...formData, id: user?.userId }),
-      //   }
-      // );
-
-      // if (!response.ok) {
-      //   if (response.status === 401) {
-      //     router.push("/login");
-      //     return;
-      //   }
-      //   throw new Error("Failed to update profile");
-      // }
-      // const data = await response.json();
-      // setFormData(data);
 
       setSuccess("Profile updated successfully!");
     } catch (err) {
