@@ -85,7 +85,7 @@ export default function Navbar() {
                 <span className="text-white font-bold text-xl">$</span>
               </div>
               <span className="text-lg md:text-xl font-semibold text-gray-900">
-                My Money
+                CashFlow
               </span>
             </Link>
 

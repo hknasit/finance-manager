@@ -18,9 +18,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "My Money",
+  title: "CashFlow",
   description:
-    "My Money is a personal finance management web application that helps users manage their finances.",
+    "CashFlow is a personal finance management web application that helps users manage their finances.",
 };
 
 export default function RootLayout({

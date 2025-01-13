@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 const BASE_PATH = '/projects/mymoney';
 const PUBLIC_PATHS = [
-  `/`,              // Allow root path
   `/login`,
   `/register`,
   `/forgot-password`,
@@ -10,16 +9,8 @@ const PUBLIC_PATHS = [
   `/verify-email`,
 ];
 
-// Helper function to check if a path is public
 const isPublicPath = (pathname) => {
-  // First, normalize the path relative to BASE_PATH
-  const relativePath = pathname.startsWith(BASE_PATH) 
-    ? pathname.slice(BASE_PATH.length) 
-    : pathname;
-    
-  return PUBLIC_PATHS.some(path => 
-    relativePath === path || relativePath === path + '/'
-  );
+  return PUBLIC_PATHS.some(path => pathname.startsWith(path));
 };
 
 const isSafeReturnUrl = (url) => {
@@ -34,34 +25,18 @@ export function middleware(request) {
   // Remove trailing slash for consistent comparison
   const normalizedPath = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
   
-  // Skip middleware for static files and API routes
-  if (
-    pathname.startsWith('/_next') || 
-    pathname.startsWith('/api/') ||
-    pathname.includes('.')
-  ) {
-    return NextResponse.next();
-  }
-
   const token = request.cookies.get("auth-token");
   const isValidToken = token?.value && token.value.length > 0;
 
-  // Check if it's a public path (including the landing page)
   if (isPublicPath(normalizedPath)) {
-    // If user is logged in and tries to access login/register pages, redirect to dashboard
-    if (isValidToken && 
-        (normalizedPath.includes('/login') || normalizedPath.includes('/register'))) {
+    if (isValidToken) {
       return NextResponse.redirect(new URL(`${BASE_PATH}/dashboard`, request.url));
     }
     return NextResponse.next();
   }
 
-  // For protected routes, check authentication
   if (!isValidToken) {
-    const returnUrl = normalizedPath.startsWith(BASE_PATH) 
-      ? normalizedPath.slice(BASE_PATH.length)
-      : normalizedPath;
-      
+    const returnUrl = normalizedPath.slice(BASE_PATH.length);
     const loginUrl = new URL(`${BASE_PATH}/login`, request.url);
     
     if (isSafeReturnUrl(returnUrl)) {
@@ -89,12 +64,12 @@ export function middleware(request) {
   return response;
 }
 
-// Update matcher to be more specific and exclude static files and API routes
-export const config = {
+// Update matcher to be more specific about which paths to include/exclude
+export const config = { 
   matcher: [
-    // Match all paths under /projects/mymoney
-    '/projects/mymoney/:path*',
-    // Match root path for landing page
+    // Match all paths under /projects/mymoney except static files and API routes
+    '/projects/mymoney/((?!api|_next|_static|.*\\..*).*)',
+    '/((?!api|_next|_static|.*\\..*).*)',
     '/',
-  ],
+  ]
 };
