@@ -31,8 +31,11 @@ const isSafeReturnUrl = (url) => {
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
+  console.log(pathname);
   // Remove trailing slash for consistent comparison
   const normalizedPath = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+
+  console.log(`Middleware: ${normalizedPath}`);
   
   // Skip middleware for static files and API routes
   if (
@@ -92,9 +95,9 @@ export function middleware(request) {
 // Update matcher to be more specific and exclude static files and API routes
 export const config = {
   matcher: [
-    // Match all paths under /projects/mymoney
-    '/projects/mymoney/:path*',
-    // Match root path for landing page
-    '/',
+     // Match all paths under /projects/mymoney except static files and API routes
+    '/projects/mymoney/((?!api|_next|_static|.*\\..*).*)',
+    '/((?!api|_next|_static|.*\\..*).*)',
+    // '/projects/mymoney/:path*'
   ],
 };

@@ -17,16 +17,6 @@ const config: NextConfig = {
     NEXT_PUBLIC_BASE_PATH: "/projects/mymoney",
   },
 
-  async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "/dashboard",
-        permanent: true,
-      },
-    ];
-  },
-
   // Output configuration for better optimization
   output: "standalone",
 };
