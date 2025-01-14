@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   `/forgot-password`,
   `/reset-password`,
   `/verify-email`,
+  '/about',
+  '/contact'
 ];
 
 // Helper function to check if a path is public

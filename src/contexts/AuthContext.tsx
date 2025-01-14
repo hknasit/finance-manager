@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const decoded = jwtDecode<User>(data.token);
       setUser(decoded);
       setIsAuthenticated(true);
-      router.push("/dashboard");
+      router.push(`${process.env.NEXT_PUBLIC_BASE_PATH}/dashboard`);
     } catch (error) {
       console.error("Login error:", error);
       throw new Error(error);

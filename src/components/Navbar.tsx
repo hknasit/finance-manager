@@ -74,7 +74,7 @@ export default function Navbar() {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 // Define paths where the Navbar should not be displayed
-const noNavbarPaths = ["/"];
+const noNavbarPaths = ["/", "/about/", '/contact/'];
 if (noNavbarPaths.includes(pathname)) {
   return null; // Don't render the Navbar
 }

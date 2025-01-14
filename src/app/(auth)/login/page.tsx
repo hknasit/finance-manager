@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -7,16 +6,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Divider,
-  TextField,
-  Typography,
-  Alert,
-} from "@mui/material";
+  Mail,
+  Lock,
+  Loader2,
+  ArrowRight,
+  AlertCircle,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -25,6 +22,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,120 +39,139 @@ export default function LoginPage() {
   };
 
   return (
-    <Container
-      maxWidth={false}
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "background.default",
-        py: 4,
-      }}
-    >
-      <Card sx={{ width: "100%", maxWidth: 480, boxShadow: 1 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography
-              variant="h4"
-              component="h1"
-              gutterBottom
-              sx={{ fontWeight: 700 }}
-            >
-              Welcome back
-            </Typography>
-            <Typography color="text.secondary">
-              Please sign in to your account
-            </Typography>
-          </Box>
+    <div className="min-h-screen bg-white">
+      <main className="container mx-auto px-4 py-4 md:py-8">
+        <div className="max-w-md mx-auto">
+          {/* Login Card */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            {/* Card Header */}
+            <div className="px-6 md:px-8 pt-8 pb-6 text-center bg-gradient-to-br from-green-50 to-blue-50">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                Welcome Back
+              </h1>
+              <p className="text-gray-600">Please sign in to your account</p>
+            </div>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
+            {/* Error Message */}
+            {error && (
+              <div className="mx-6 md:mx-8 mt-6 flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit}>
-            <Box sx={{ mb: 3 }}>
-              <TextField
-                fullWidth
-                label="Email address"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </Box>
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Email address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="block w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-green-600 outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                </div>
 
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "flex-end",
-                mb: 3,
-              }}
-            >
-              <Link
-                href="/forgot-password"
-                style={{
-                  textDecoration: "none",
-                  //@ts-ignore
-                  color: (theme) => theme.palette.primary.main,
-                }}
-              >
-                <Typography variant="body2">Forgot your password?</Typography>
-              </Link>
-            </Box>
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="block w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-green-600 outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5 text-gray-500 hover:text-gray-600" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-gray-500 hover:text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-            <Button
-              fullWidth
-              size="large"
-              type="submit"
-              variant="contained"
-              disabled={loading}
-              sx={{ mb: 3 }}
-            >
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
-
-            <Box sx={{ position: "relative", my: 3 }}>
-              <Divider>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    px: 1,
-                    color: "text.secondary",
-                    bgcolor: "background.paper",
-                  }}
+              <div className="flex justify-end">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-green-600 hover:text-green-700 font-medium"
                 >
-                  New to the platform?
-                </Typography>
-              </Divider>
-            </Box>
+                  Forgot your password?
+                </Link>
+              </div>
 
-            <Button
-              component={Link}
-              href="/register"
-              fullWidth
-              size="large"
-              variant="outlined"
-              disabled={loading}
-            >
-              Create an account
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </Container>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
+              </button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">
+                    New to the platform?
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                href="/register"
+                className="w-full inline-flex items-center justify-center px-6 py-3 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create an account
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
