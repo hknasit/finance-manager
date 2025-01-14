@@ -73,7 +73,11 @@ export default function Navbar() {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
-
+// Define paths where the Navbar should not be displayed
+const noNavbarPaths = ["/"];
+if (noNavbarPaths.includes(pathname)) {
+  return null; // Don't render the Navbar
+}
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
       <nav className="bg-white border-b border-slate-200">

@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CategoryProvider } from "@/contexts/CategoryContext";
 import { UserPreferencesProvider } from "@/contexts/UserPreferencesContext";
+import MainWrapper from "@/components/layout/MainWrapper";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,6 +29,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+ 
+
   return (
     <html lang="en">
       <body
@@ -38,7 +41,7 @@ export default function RootLayout({
             <UserPreferencesProvider>
               <div className="min-h-screen bg-gray-50">
                 <Navbar />
-                <main className="main-content">{children}</main>
+                <MainWrapper>{children}</MainWrapper>
               </div>
             </UserPreferencesProvider>
           </CategoryProvider>

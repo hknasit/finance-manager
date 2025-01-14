@@ -21,7 +21,7 @@ body {
 }
 
 .main-content {
-  padding-top: 4rem; /* 64px to account for navbar height */
+  padding-top: 4rem; /*64px to account for navbar height */
   min-height: calc(100vh - 4rem);
   width: 100%;
   max-width: 100vw;

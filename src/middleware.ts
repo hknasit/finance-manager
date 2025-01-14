@@ -21,7 +21,6 @@ const isPublicPath = (pathname) => {
     relativePath === path || relativePath === path + '/'
   );
 };
-
 const isSafeReturnUrl = (url) => {
   return url.startsWith('/') && 
          !url.includes('//') && 
@@ -31,9 +30,8 @@ const isSafeReturnUrl = (url) => {
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
-  console.log(pathname);
   // Remove trailing slash for consistent comparison
-  const normalizedPath = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+  const normalizedPath = pathname === "/"? pathname: pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
 
   console.log(`Middleware: ${normalizedPath}`);
   
@@ -98,6 +96,6 @@ export const config = {
      // Match all paths under /projects/mymoney except static files and API routes
     '/projects/mymoney/((?!api|_next|_static|.*\\..*).*)',
     '/((?!api|_next|_static|.*\\..*).*)',
-    // '/projects/mymoney/:path*'
+    '/'
   ],
 };
