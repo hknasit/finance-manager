@@ -15,6 +15,7 @@ import {
   EyeOff,
   CheckCircle2,
   XCircle,
+  DollarSign,
 } from "lucide-react";
 
 interface FormData {
@@ -34,9 +35,9 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(true);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(true);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_PATH;
   const validateForm = (): string | null => {
     if (formData.password !== formData.confirmPassword) {
       return "Passwords do not match";
@@ -99,6 +100,22 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <nav className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <DollarSign className="w-6 md:w-8 h-6 md:h-8 text-green-600" />
+            <span className="ml-2 text-lg md:text-xl font-bold">CashFlow</span>
+          </div>
+          <div className="hidden md:flex items-center space-x-8">
+            {/* <a href="#features" className="text-gray-900 font-medium hover:text-green-600">Features</a> */}
+            <a href={`${baseUrl}/`} className="text-gray-800 hover:text-green-600">Home</a>
+            <a href={`${baseUrl}/about`} className="text-gray-800 hover:text-green-600">About</a>
+            <a href={`${baseUrl}/contact`} className="text-gray-600 hover:text-green-600">Login</a>
+            <a href={`${baseUrl}/login`} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+              Login
+            </a>
+          </div>
+          {/* Mobile menu button could be added here */}
+        </nav>
       <main className="container mx-auto px-4 py-4 md:py-8">
         <div className="max-w-md mx-auto">
           {/* Register Card */}
@@ -192,7 +209,7 @@ export default function RegisterPage() {
                     </div>
                     <input
                       id="password"
-                      type={showPassword ? "text" : "password"}
+                      type={!showPassword ? "text" : "password"}
                       autoComplete="new-password"
                       required
                       value={formData.password}
@@ -233,7 +250,7 @@ export default function RegisterPage() {
                     </div>
                     <input
                       id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
+                      type={!showConfirmPassword ? "text" : "password"}
                       autoComplete="new-password"
                       required
                       value={formData.confirmPassword}

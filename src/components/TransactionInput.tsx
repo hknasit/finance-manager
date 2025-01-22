@@ -243,7 +243,7 @@ export default function TransactionInput({
   ).filter((cat) => cat.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-start justify-center px-4">
+    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-start justify-center px-4 z-40">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl flex flex-col max-h-[85vh] mt-4 mb-20">
         {/* Header */}
         <div className="sticky top-0 p-3 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl z-10">

@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  DollarSign,
 } from "lucide-react";
 
 export default function LoginPage() {
@@ -22,8 +23,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(true);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_PATH;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -40,6 +41,22 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <nav className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <DollarSign className="w-6 md:w-8 h-6 md:h-8 text-green-600" />
+            <span className="ml-2 text-lg md:text-xl font-bold">CashFlow</span>
+          </div>
+          <div className="hidden md:flex items-center space-x-8">
+            {/* <a href="#features" className="text-gray-900 font-medium hover:text-green-600">Features</a> */}
+            <a href={`${baseUrl}/`} className="text-gray-800 hover:text-green-600">Home</a>
+            <a href={`${baseUrl}/about`} className="text-gray-800 hover:text-green-600">About</a>
+            <a href={`${baseUrl}/contact`} className="text-gray-600 hover:text-green-600">Contact</a>
+            <a href={`${baseUrl}/register`} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+              Get Started
+            </a>
+          </div>
+          {/* Mobile menu button could be added here */}
+        </nav>
       <main className="container mx-auto px-4 py-4 md:py-8">
         <div className="max-w-md mx-auto">
           {/* Login Card */}
@@ -100,7 +117,7 @@ export default function LoginPage() {
                     </div>
                     <input
                       id="password"
-                      type={showPassword ? "text" : "password"}
+                      type={!showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
