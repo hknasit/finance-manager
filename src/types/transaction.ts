@@ -1,15 +1,23 @@
 // types/transaction.ts
 
+export interface CloudinaryAsset {
+  publicId: string;
+  url: string;
+  thumbnailUrl: string;
+}
+
 export interface Transaction {
-    _id: string;
-    type: "income" | "expense";
-    category: string;
-    amount: number;
-    description: string;
-    date: string;
-    paymentMethod: "card" | "cash";
-    notes?: string;
-  }
+  _id: string;
+  type: 'income' | 'expense';
+  category: string;
+  amount: number;
+  description: string;
+  date: string;
+  paymentMethod: 'card' | 'cash';
+  image?: CloudinaryAsset;
+  notes?: string;
+}
+
   
   export interface FilterState {
     type: "all" | "income" | "expense";

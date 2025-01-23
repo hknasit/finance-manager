@@ -9,8 +9,7 @@ const config: NextConfig = {
   trailingSlash: true,
 
   images: {
-    domains: ["api.placeholder.com"],
-    path: "/projects/mymoney/_next/image",
+    domains: ["res.cloudinary.com"],
   },
 
   env: {

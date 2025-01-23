@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Transaction, { ITransaction } from "@/models/transaction.model";
 import { verifyAuth } from "@/lib/auth";
@@ -11,7 +11,7 @@ import { GoogleSheetsService } from "@/lib/googleSheets";
 import User from "@/models/user.model";
 import { UserPreference } from "@/models/user-preferences.model";
 
-// Transaction validation schema
+// Updated validation schema to include image
 const TransactionSchema = z.object({
   type: z.enum(["income", "expense"]),
   category: z.string(),
@@ -19,6 +19,16 @@ const TransactionSchema = z.object({
   description: z.string(),
   date: z.string(),
   paymentMethod: z.enum(["card", "cash"]),
+  image: z.object({
+    publicId: z.string(),
+    url: z.string(),
+    thumbnailUrl: z.string(),
+    width: z.number().optional(),
+    height: z.number().optional(),
+    format: z.string().optional(),
+  }).nullable().optional(),
+  currentCashBalance: z.number(),
+  currentBankBalance: z.number(),
 });
 
 const userDataDir = path.join(process.cwd(), "data", "users"); // Define paths globally
@@ -48,7 +58,7 @@ async function getOrCreateWorkbook(userId: string): Promise<ExcelJS.Workbook> {
   return workbook;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const authPayload = await verifyAuth();
     const userId = authPayload.id;
@@ -67,6 +77,7 @@ export async function POST(req: Request) {
       description, 
       date, 
       paymentMethod,
+      image,
       currentCashBalance,
       currentBankBalance 
     } = body;
@@ -131,7 +142,8 @@ export async function POST(req: Request) {
       amount: numAmount,
       description,
       date: new Date(date),
-      paymentMethod
+      paymentMethod,
+      image // Add the image data to the transaction
     });
 
     return NextResponse.json({

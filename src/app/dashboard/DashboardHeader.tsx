@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // components/Dashboard/DashboardHeader.tsx
 import React from "react";
-import { Filter, Plus, Wallet, CreditCard } from "lucide-react";
+import { Plus, Wallet, CreditCard } from "lucide-react";
 import { FilterState } from "@/types/transaction";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
@@ -79,7 +80,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
           {/* Right Section */}
           <div className="flex items-center justify-between md:justify-end gap-3">
-            <button
+            {/* <button
               onClick={onShowFilters}
               className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             >
@@ -91,7 +92,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 filters.endDate) && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-green-600 rounded-full" />
               )}
-            </button>
+            </button> */}
             <button
               onClick={onAddTransaction}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm hover:shadow-md"

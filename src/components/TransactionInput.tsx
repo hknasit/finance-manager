@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -7,6 +8,7 @@ import {
   Check,
   ChevronDown,
   Search,
+  ImageIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -20,6 +22,13 @@ import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { cloudinaryConfig } from "@/lib/config/cloudinary";
+import { CldUploadWidget } from "next-cloudinary";
+import type {
+  CloudinaryUploadResult,
+  CloudinaryAsset,
+} from "@/types/cloudinary";
+import { formatCloudinaryResult } from "@/lib/utils/cloudinary";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -123,6 +132,7 @@ export default function TransactionInput({
   const [category, setCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const { preferences, setPreferences } = useUserPreferences();
+  const [imageData, setImageData] = useState<CloudinaryAsset | null>(null);
 
   // Close category dropdown when clicking outside
   useEffect(() => {
@@ -146,6 +156,16 @@ export default function TransactionInput({
       setCategory(categoryList[0].name);
     }
   }, [categories, type, category]);
+
+  const handleUploadSuccess = (result: CloudinaryUploadResult) => {
+    const formattedAsset = formatCloudinaryResult(result);
+    setImageData(formattedAsset);
+  };
+  // Add this function to handle upload error
+  const handleUploadError = (error: any) => {
+    console.error("Upload error:", error);
+    setError("Failed to upload image. Please try again.");
+  };
 
   const handleTypeChange = (newType: "income" | "expense") => {
     setType(newType);
@@ -192,6 +212,7 @@ export default function TransactionInput({
         description: description.trim(),
         paymentMethod,
         date: formattedDate,
+        image: imageData, // Add this line
       };
 
       const response = await fetch(
@@ -218,8 +239,8 @@ export default function TransactionInput({
       setPreferences((prev) => ({
         ...prev,
         bankBalance: data.balances.bankBalance,
-        cashBalance: data.balances.cashBalance
-      }))
+        cashBalance: data.balances.cashBalance,
+      }));
 
       // const newTransaction = await response.json();
       //@ts-ignore
@@ -318,6 +339,51 @@ export default function TransactionInput({
               </div>
             </div>
 
+            {/* Add the image upload section */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Receipt Image
+              </label>
+              {!imageData ? (
+                <CldUploadWidget
+                  uploadPreset={cloudinaryConfig.uploadPreset}
+                  onSuccess={(result: any) => handleUploadSuccess(result.info)}
+                  onError={handleUploadError}
+                  // @ts-ignore
+                  options={cloudinaryConfig.uploadOptions}
+                >
+                  {({ open }) => (
+                    <button
+                      type="button"
+                      onClick={() => open()}
+                      disabled={loading}
+                      className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ImageIcon className="w-5 h-5 text-slate-400" />
+                      <span className="text-sm text-slate-600">
+                        Upload receipt image
+                      </span>
+                    </button>
+                  )}
+                </CldUploadWidget>
+              ) : (
+                <div className="relative rounded-xl overflow-hidden">
+                  <img
+                    src={imageData.url}
+                    alt="Receipt"
+                    className="w-full h-32 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setImageData(null)}
+                    disabled={loading}
+                    className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
+                  >
+                    <X className="w-4 h-4 text-slate-600" />
+                  </button>
+                </div>
+              )}
+            </div>
             {/* Category */}
             <div className="relative" ref={categoryRef}>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">

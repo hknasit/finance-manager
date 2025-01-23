@@ -1,6 +1,4 @@
-"use clinet";
-// components/FilterPanel.tsx
-
+// components/Dashboard/FilterPanel.tsx
 import React, { useEffect } from "react";
 import { X, Check, CreditCard, Wallet } from "lucide-react";
 import { FilterState } from "@/types/transaction";
@@ -18,17 +16,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   setFilters,
 }) => {
   const { categories } = useCategories();
-  const [filterCategory, setFilterCategory] = React.useState(
-    filters.category === "all"
-      ? [...categories.income, ...categories.expense]
-      : filters.category === "income"
-      ? categories.income
-      : categories.expense
-  );
-  /**
-   * Resets the filters to their default state and closes the filter panel.
-   * The default state is: all types, all categories, all payment methods, and no dates.
-   */
+
   const resetFilters = () => {
     setFilters({
       type: "all",
@@ -40,29 +28,26 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     onClose();
   };
 
+  // Handle click outside
   useEffect(() => {
-    setFilterCategory(
-      filters.category === "all"
-        ? [...categories.income, ...categories.expense]
-        : filters.category === "income"
-        ? categories.income
-        : categories.expense
-    );
-  }, [categories, filters.category]);
+    const handleClickOutside = (e: MouseEvent) => {
+      const panel = document.getElementById('filter-panel');
+      if (panel && !panel.contains(e.target as Node)) {
+        onClose();
+      }
+    };
 
-  function handleCategoryChange(type: "income" | "expense" | "all") {
-    setFilterCategory(
-      type === "all"
-        ? [...categories.income, ...categories.expense]
-        : type === "income"
-        ? categories.income
-        : categories.expense
-    );
-  }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-40 bg-black bg-opacity-25">
-      <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-lg">
+    <div className="fixed inset-0 z-50 bg-black/25 backdrop-blur-sm">
+      <div 
+        id="filter-panel"
+        className="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-lg animate-slide-left"
+      >
+        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
           <button
@@ -73,7 +58,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           </button>
         </div>
 
-        <div className="p-4 space-y-6">
+        {/* Filter Options */}
+        <div className="p-4 space-y-6 overflow-y-auto h-[calc(100%-8rem)]">
           {/* Type Filter */}
           <div>
             <label className="text-sm font-medium text-slate-700 mb-2 block">
@@ -83,13 +69,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               {["all", "income", "expense"].map((type) => (
                 <button
                   key={type}
-                  onClick={() => {
-                    handleCategoryChange(type as "all" | "income" | "expense");
-                    setFilters({
-                      ...filters,
-                      type: type as FilterState["type"],
-                    });
-                  }}
+                  onClick={() => setFilters({
+                    ...filters,
+                    type: type as FilterState["type"],
+                  })}
                   className={`p-2 text-sm rounded-lg capitalize ${
                     filters.type === type
                       ? "bg-green-100 text-green-700 font-medium border border-green-600"
@@ -111,12 +94,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               {["all", "card", "cash"].map((method) => (
                 <button
                   key={method}
-                  onClick={() =>
-                    setFilters({
-                      ...filters,
-                      paymentMethod: method as FilterState["paymentMethod"],
-                    })
-                  }
+                  onClick={() => setFilters({
+                    ...filters,
+                    paymentMethod: method as FilterState["paymentMethod"],
+                  })}
                   className={`p-2 text-sm rounded-lg capitalize flex items-center justify-center gap-1 ${
                     filters.paymentMethod === method
                       ? "bg-green-100 text-green-700 font-medium border border-green-600"
@@ -141,46 +122,57 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             </label>
             <select
               value={filters.category}
-              onChange={(e) =>
-                setFilters({ ...filters, category: e.target.value })
-              }
-              className="w-full p-3 border border-slate-200 rounded-xl text-slate-900 focus:border-green-600 transition-colors outline-none"
+              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:border-green-600 transition-colors outline-none"
             >
               <option value="all">All Categories</option>
-              {filterCategory?.map((category) => (
-                <option key={category?._id} value={category?.name}>
-                  {category?.name}
-                </option>
-              ))}
+              <optgroup label="Income">
+                {categories.income.map((category) => (
+                  <option key={category._id} value={category.name}>
+                    {category.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Expense">
+                {categories.expense.map((category) => (
+                  <option key={category._id} value={category.name}>
+                    {category.name}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
 
-          {/* Date Filter */}
+          {/* Date Range Filter */}
           <div>
             <label className="text-sm font-medium text-slate-700 mb-2 block">
               Date Range
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) =>
-                  setFilters({ ...filters, startDate: e.target.value })
-                }
-                className="p-3 border border-slate-200 rounded-xl text-slate-900 focus:border-green-600 transition-colors outline-none"
-              />
-              <input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) =>
-                  setFilters({ ...filters, endDate: e.target.value })
-                }
-                className="p-3 border border-slate-200 rounded-xl text-slate-900 focus:border-green-600 transition-colors outline-none"
-              />
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">From</label>
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:border-green-600 transition-colors outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 mb-1 block">To</label>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:border-green-600 transition-colors outline-none"
+                />
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Action Buttons */}
+        {/* Action Buttons */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200">
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={resetFilters}
