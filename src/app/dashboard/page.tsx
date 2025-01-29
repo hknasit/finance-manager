@@ -12,7 +12,7 @@ import { MonthlyOverview } from "./MonthlyOverview";
 import { TransactionTable } from "./TransactionTable";
 import { TransactionDetails } from "./TransactionDetails";
 import { FilterPanel } from "./FilterPanel";
-import TransactionInput from "@/components/TransactionInput";
+import TransactionInput from "@/components/TransactionInput2";
 
 export default function Dashboard() {
   const { isAuthenticated } = useAuth();
@@ -33,6 +33,7 @@ export default function Dashboard() {
     startDate: "",
     endDate: "",
   });
+  const [showDetails, setShowDetails] = useState(false);
 
   //   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const { categories } = useCategories();
@@ -70,6 +71,23 @@ export default function Dashboard() {
       setTransactions([]); // Set empty array on error
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (id: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete transaction');
+      }
+      
+      // Refresh your transactions list here
+      fetchTransactions();
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
     }
   };
 
@@ -218,18 +236,39 @@ export default function Dashboard() {
 
         <TransactionTable
           transactions={filteredTransactions}
-          onSelectTransaction={setSelectedTransaction}
+          showDetails={setShowDetails}
           formatAmount={formatAmount}
           filters={filters}
           onFilterChange={setFilters}
+          setSelectedTransaction={setSelectedTransaction}
+          setShowTransactionForm={setShowTransactionForm}
+          onDeleteTransaction={handleDeleteTransaction}
         />
       </div>
 
-      {/* Modals */}
       {showTransactionForm && (
         <TransactionInput
-          setShowForm={setShowTransactionForm}
-          setTransactions={setTransactions}
+          mode={selectedTransaction!=null ? "edit" : "create"}
+          initialData={selectedTransaction || undefined}
+          onClose={() => {
+            setShowTransactionForm(false);
+            setSelectedTransaction(null);
+          }}
+          onSuccess={(transaction) => {
+            setTransactions((prev) => {
+              if (selectedTransaction) {
+                // Update existing transaction
+                return prev.map((t) =>
+                  t._id === transaction._id ? transaction : t
+                );
+              }
+              // Add new transaction
+              return [transaction, ...prev];
+            });
+            setShowTransactionForm(false);
+            setSelectedTransaction(null);
+            fetchTransactions(); // Refresh data
+          }}
         />
       )}
 
@@ -241,10 +280,10 @@ export default function Dashboard() {
         />
       )}
 
-      {selectedTransaction && (
+      {showDetails && (
         <TransactionDetails
           transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
+          onClose={() => setShowDetails(false)} // Close the details view when the close button is clicked(null)}
         />
       )}
     </div>

@@ -1,423 +1,446 @@
-import React, { useState, useEffect, useRef } from "react";
-import { CreditCard, Wallet, X, Check, ChevronDown } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import DatePicker from "./DatePicker";
-import { AddCategoryModal } from "./Category/AddCategoryModal";
-import { useCategories } from "@/contexts/CategoryContext";
-import { CategoryItem } from "./Category/CategoryItem";
-import { EditCategoryModal } from "./Category/EditCategoryModal";
-import { DeleteCategoryModal } from "./Category/DeleteCategoryModal";
-import Calculator from "./Calculator/Calculator";
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 
-interface CalculatorState {
-  currentValue: string;
-  previousValue: string;
-  operation: string | null;
-  isNewNumber: boolean;
-}
+// TransactionInput.tsx
+import React, { useState, useEffect, useRef } from "react";
+import {
+  CreditCard,
+  Wallet,
+  X,
+  Check,
+  ChevronDown,
+  Search,
+  ImageIcon,
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCategories } from "@/contexts/CategoryContext";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+// import { datePickerTheme } from "@/lib/themes/datepicker";
+import { CldUploadWidget } from "next-cloudinary";
+import dayjs from "dayjs";
+import type {
+  CloudinaryUploadResult,
+  CloudinaryAsset,
+} from "@/types/cloudinary";
+import type { Transaction } from "@/types/transaction";
+import { cloudinaryConfig } from "@/lib/config/cloudinary";
 
 interface TransactionInputProps {
-  setShowForm: (boolean) => void;
+  mode: "create" | "edit";
+  initialData?: Transaction;
+  onClose: () => void;
+  onSuccess: (transaction: Transaction) => void;
+}
+
+interface FormState {
+  type: "income" | "expense";
+  paymentMethod: "card" | "cash";
+  category: string;
+  description: string;
+  amount: string;
+  date: Date;
+  image: CloudinaryAsset | null;
 }
 
 export default function TransactionInput({
-  setShowForm,
+  mode,
+  initialData,
+  onClose,
+  onSuccess,
 }: TransactionInputProps) {
   const { isAuthenticated } = useAuth();
-  const [description, setDescription] = useState("");
-  const [type, setType] = useState<"income" | "expense">("expense");
-  const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [error, setError] = useState("");
-  const [showCategories, setShowCategories] = useState(false);
-  const [transactionDate, setTransactionDate] = useState(new Date());
+  const { categories } = useCategories();
+  const { preferences, setPreferences } = useUserPreferences();
   const categoryRef = useRef<HTMLDivElement>(null);
-  const [showAddCategory, setShowAddCategory] = useState(false);
-  const { categories, loading: categoriesLoading } = useCategories();
-  const [loading, setLoading] = useState(false);
 
-  const [category, setCategory] = useState("");
-
-  // Update category whenever categories or type changes
-  useEffect(() => {
-    const categoryList =
-      type === "expense" ? categories.expense : categories.income;
-    if (categoryList.length > 0 && !category) {
-      setCategory(categoryList[0].name);
-    }
-  }, [categories, type, category]);
-
-  const handleTypeChange = (newType: "income" | "expense") => {
-    setType(newType);
-    const categoryList =
-      newType === "expense" ? categories.expense : categories.income;
-    if (categoryList.length > 0) {
-      setCategory(categoryList[0].name);
-    } else {
-      setCategory("");
-    }
-  };
-
-  const [editCategory, setEditCategory] = useState(null);
-  const [deleteCategory, setDeleteCategory] = useState(null);
-
-  const filteredCategory =
-    type === "expense" ? categories.expense : categories.income;
-
-  const [calc, setCalc] = useState<CalculatorState>({
-    currentValue: "0",
-    previousValue: "",
-    operation: null,
-    isNewNumber: true,
+  const [formData, setFormData] = useState<FormState>({
+    type: initialData?.type || "expense",
+    paymentMethod: initialData?.paymentMethod || "card",
+    category: initialData?.category || "",
+    description: initialData?.description || "",
+    amount: initialData?.amount?.toString() || "",
+    date: initialData?.date
+      ? dayjs(initialData.date).toDate()
+      : dayjs().toDate(),
+    image: initialData?.image || null,
   });
 
-  // Close category dropdown when clicking outside
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showCategories, setShowCategories] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+console.log(mode+" :::  mode in the input")
+console.log(initialData)
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    const handler = (e: MouseEvent) => {
       if (
         categoryRef.current &&
-        !categoryRef.current.contains(event.target as Node)
+        !categoryRef.current.contains(e.target as Node)
       ) {
         setShowCategories(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleNumber = (num: string) => {
-    if (calc.isNewNumber) {
-      setCalc((prev) => ({
-        ...prev,
-        currentValue: num,
-        isNewNumber: false,
-      }));
-    } else {
-      if (num === "." && calc.currentValue.includes(".")) return;
-      setCalc((prev) => ({
-        ...prev,
-        currentValue: prev.currentValue + num,
-      }));
+  useEffect(() => {
+    const categoryList =
+      formData.type === "expense" ? categories.expense : categories.income;
+    if (categoryList.length > 0 && !formData.category) {
+      setFormData((prev) => ({ ...prev, category: categoryList[0].name }));
     }
+  }, [categories, formData.type, formData.category]);
+  const handleUploadSuccess = (result: CloudinaryUploadResult) => {
+    const formattedAsset = {
+      publicId: result.public_id,
+      url: result.secure_url,
+      //@ts-ignore
+      thumbnailUrl: result?.thumbnail_url || result.secure_url,
+    };
+    setFormData((prev) => ({ ...prev, image: formattedAsset }));
   };
 
-  const handleOperation = (op: string) => {
-    if (calc.operation && !calc.isNewNumber) {
-      calculateResult();
+  const handleUploadError = (error: unknown) => {
+    console.error("Upload error:", error);
+    setError("Failed to upload image. Please try again.");
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d*\.?\d*$/.test(value) || value === "") {
+      setFormData((prev) => ({ ...prev, amount: value }));
     }
-    setCalc((prev) => ({
-      ...prev,
-      operation: op,
-      previousValue: prev.currentValue,
-      isNewNumber: true,
-    }));
-  };
-
-  const calculateResult = () => {
-    if (!calc.operation || !calc.previousValue) return;
-    const prev = parseFloat(calc.previousValue);
-    const current = parseFloat(calc.currentValue);
-    let result = 0;
-
-    switch (calc.operation) {
-      case "+":
-        result = prev + current;
-        break;
-      case "-":
-        result = prev - current;
-        break;
-      case "×":
-        result = prev * current;
-        break;
-      case "÷":
-        result = prev / current;
-        break;
-    }
-
-    setCalc({
-      currentValue: result.toString(),
-      previousValue: "",
-      operation: null,
-      isNewNumber: true,
-    });
-  };
-
-  const handleEquals = () => {
-    if (calc.operation) calculateResult();
-  };
-
-  const handleClear = () => {
-    setShowForm(false);
-    setCalc({
-      currentValue: "0",
-      previousValue: "",
-      operation: null,
-      isNewNumber: true,
-    });
   };
 
   const handleSave = async () => {
     try {
-      if (!isAuthenticated) throw new Error("Please login to add transactions");
-      if (!description.trim()) throw new Error("Please add a description");
+      if (!isAuthenticated) throw new Error("Please login first");
+      if (!formData.description.trim()) throw new Error("Description required");
+      if (!formData.amount || parseFloat(formData.amount) <= 0) {
+        throw new Error("Valid amount required");
+      }
 
       setLoading(true);
       setError("");
 
-      const amount = parseFloat(calc.currentValue);
-      if (isNaN(amount) || amount <= 0)
-        throw new Error("Please enter a valid amount");
+      const endpoint =
+        mode === "create"
+          ? `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/add`
+          : `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/${initialData?._id}`;
 
-      const transactionData = {
-        type,
-        category,
-        amount,
-        description: description.trim(),
-        paymentMethod,
-        date: transactionDate.toISOString(),
-      };
+      const method = mode === "create" ? "POST" : "PUT";
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/add`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(transactionData),
-        }
-      );
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          amount: parseFloat(formData.amount),
+          date: dayjs(formData.date).format("YYYY-MM-DD"),
+          currentBankBalance: preferences.bankBalance,
+          currentCashBalance: preferences.cashBalance,
+        }),
+      });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to save transaction");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to save transaction");
       }
 
-      handleClear();
-      setDescription("");
-      setShowForm(false);
-    } catch (err) {
+      const data = await response.json();
+
+      setPreferences((prev) => ({
+        ...prev,
+        bankBalance: data.balances.bankBalance,
+        cashBalance: data.balances.cashBalance,
+      }));
+
+      onSuccess(data.transaction);
+      onClose();
+    } catch (err: any) {
       setError(err.message);
       console.error("Transaction error:", err);
     } finally {
       setLoading(false);
     }
   };
-
-  if (categoriesLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-slate-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
   return (
-    <div className="min-h-screen bg-slate-100 md:bg-white md:min-h-[calc(100vh-4rem)] w-full flex items-start justify-center">
-      <div className="w-full md:max-w-sm bg-white md:my-4 md:rounded-3xl md:shadow-lg">
-        {/* Fixed Header */}
-        <div className="sticky top-0 z-10 bg-white px-4 py-3 flex justify-between items-center border-b border-slate-200 md:border-none">
+    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-start justify-center px-4 z-40">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl flex flex-col max-h-[85vh] mt-4 mb-20">
+        {/* Header */}
+        <div className="sticky top-0 p-3 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl z-10">
           <button
-            onClick={() => handleClear()}
+            onClick={onClose}
             disabled={loading}
-            className="text-green-600 font-medium flex items-center gap-1 p-2 hover:bg-green-50 rounded-lg"
+            className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            <X size={20} />
-            <span className="text-sm">CLOSE</span>
+            <X size={18} />
+            <span className="text-sm">Close</span>
           </button>
           <button
             onClick={handleSave}
             disabled={loading}
-            className="text-green-600 font-medium flex items-center gap-1 p-2 hover:bg-green-50 rounded-lg"
+            className="text-green-600 hover:text-green-700 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-green-50 rounded-lg transition-colors"
           >
-            <Check size={20} />
-            <span className="text-sm">{loading ? "SAVING..." : "SAVE"}</span>
+            <Check size={18} />
+            <span className="text-sm">
+              {loading ? "Saving..." : mode === "create" ? "Save" : "Update"}
+            </span>
           </button>
         </div>
 
-        <div className="p-4">
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-xl text-sm font-medium">
-              {error}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-3.5">
+            {error && (
+              <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
+                {error}
+              </div>
+            )}
+
+            {/* Transaction Type */}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+              {["income", "expense"].map((t) => (
+                <button
+                  key={t}
+                  className={`py-2.5 px-3 rounded-lg transition-all text-sm font-medium ${
+                    formData.type === t
+                      ? "bg-white shadow-sm text-green-600"
+                      : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      type: t as "income" | "expense",
+                      category: "", // Reset category when type changes
+                    }))
+                  }
+                  disabled={loading}
+                >
+                  {t.toUpperCase()}
+                </button>
+              ))}
             </div>
-          )}
-
-          {/* Transaction Type Selector */}
-          <div className="flex justify-center gap-6 text-sm font-medium mb-6">
-            {["income", "expense"].map((t) => (
-              <button
-                key={t}
-                className={`uppercase p-2 ${
-                  type === t
-                    ? "text-green-600 font-semibold"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-                onClick={() => handleTypeChange(t as "income" | "expense")}
-                disabled={loading}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-
-          {/* Payment Method and Category */}
-          <div className="grid grid-cols-1  gap-3 mb-4">
-            <div className="">
-              <div className="text-slate-700 font-medium text-sm mb-2">
+            {/* Payment Method */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Payment Method
-              </div>
+              </label>
               <div className="flex gap-2">
-                <button
-                  className={`flex-1 flex items-center justify-center gap-2 p-3 border rounded-xl transition-colors ${
-                    paymentMethod === "card"
-                      ? "bg-green-100 border-green-600 text-green-700 font-medium"
-                      : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
-                  onClick={() => setPaymentMethod("card")}
-                  disabled={loading}
-                >
-                  <CreditCard className="w-5 h-5" />
-                  <span>Card</span>
-                </button>
-                <button
-                  className={`flex-1 flex items-center justify-center gap-2 p-3 border rounded-xl transition-colors ${
-                    paymentMethod === "cash"
-                      ? "bg-green-100 border-green-600 text-green-700 font-medium"
-                      : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
-                  onClick={() => setPaymentMethod("cash")}
-                  disabled={loading}
-                >
-                  <Wallet className="w-5 h-5" />
-                  <span>Cash</span>
-                </button>
+                {[
+                  { id: "card", icon: CreditCard, label: "Card" },
+                  { id: "cash", icon: Wallet, label: "Cash" },
+                ].map(({ id, icon: Icon, label }) => (
+                  <button
+                    key={id}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 border rounded-xl transition-colors ${
+                      formData.paymentMethod === id
+                        ? "bg-green-50 border-green-600 text-green-700 font-medium"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        paymentMethod: id as "card" | "cash",
+                      }))
+                    }
+                    disabled={loading}
+                  >
+                    <Icon size={18} />
+                    <span className="text-sm">{label}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="relative " ref={categoryRef}>
-              <div className="text-slate-700 font-medium text-sm mb-2">
+            {/* Category */}
+            <div className="relative" ref={categoryRef}>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Category
-              </div>
-
+              </label>
               <button
-                className="w-full flex items-center justify-between p-3 border border-slate-200 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-colors text-slate-700"
+                className="w-full flex items-center justify-between py-2.5 px-3 border border-slate-200 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-colors text-slate-700"
                 onClick={() => setShowCategories(!showCategories)}
                 disabled={loading}
               >
-                <span>{category}</span>
-                <ChevronDown className="w-5 h-5" />
+                <span className="text-sm">{formData.category}</span>
+                <ChevronDown size={18} />
               </button>
 
               {showCategories && (
                 <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-                  <div className="max-h-64 overflow-y-auto">
-                    {filteredCategory.map((cat) => (
-                      <CategoryItem
-                        key={cat._id}
-                        category={cat}
-                        onSelect={() => {
-                          setCategory(cat.name);
-                          setShowCategories(false);
-                        }}
-                        onEdit={() => setEditCategory(cat)}
-                        onDelete={() => setDeleteCategory(cat)}
-                        isSelected={category === cat.name}
+                  <div className="p-2 border-b border-slate-200">
+                    <div className="relative">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search categories..."
+                        className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg"
+                        autoFocus
                       />
-                    ))}
+                    </div>
                   </div>
-
-                  {/* Add Category Button */}
-                  {/* <div className="border-t border-slate-200">
-                    <button
-                      onClick={() => {
-                        setShowCategories(false);
-                        setShowAddCategory(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-green-600 hover:bg-green-50 transition-colors"
-                      type="button"
-                    >
-                      <Plus size={18} />
-                      <span className="font-medium">Add New Category</span>
-                    </button>
-                  </div> */}
+                  <div className="max-h-48 overflow-y-auto">
+                    {(formData.type === "expense"
+                      ? categories.expense
+                      : categories.income
+                    )
+                      .filter((cat) =>
+                        cat.name
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase())
+                      )
+                      .map((cat) => (
+                        <button
+                          key={cat._id}
+                          className={`w-full text-left px-3 py-2.5 hover:bg-slate-50 transition-colors text-sm ${
+                            formData.category === cat.name
+                              ? "text-green-600 font-medium bg-green-50"
+                              : "text-slate-600"
+                          }`}
+                          onClick={() => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              category: cat.name,
+                            }));
+                            setShowCategories(false);
+                            setSearchTerm("");
+                          }}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                  </div>
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Description Input */}
-          <div className="mb-4">
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description"
-              className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:border-green-600 transition-colors text-slate-900 placeholder:text-slate-500"
-              disabled={loading}
-            />
-          </div>
-
-          <DatePicker
-            selectedDate={transactionDate}
-            onChange={(newDate) => setTransactionDate(newDate)}
-          />
-
-          {/* Amount Display - Higher contrast background */}
-          <div className="text-right mb-4 p-4 border border-slate-200 rounded-xl bg-slate-50">
-            <div className="text-4xl font-semibold tracking-tight text-slate-900">
-              {calc.currentValue}
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Description
+              </label>
+              <input
+                type="text"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                placeholder="What's this for?"
+                className="w-full py-2.5 px-3 text-sm border border-slate-200 rounded-xl outline-none focus:border-green-600 transition-colors text-slate-900 placeholder:text-slate-400"
+                disabled={loading}
+              />
             </div>
-            {calc.operation && (
-              <div className="text-sm text-slate-600 mt-1 font-medium">
-                {calc.previousValue} {calc.operation}
-              </div>
-            )}
-          </div>
 
-          {/* Keypad - Higher contrast keys */}
-          <Calculator
-            handleEquals={handleEquals}
-            handleNumber={handleNumber}
-            handleOperation={handleOperation}
-          />
-        </div>
-        {/* Footer */}
-        <div className=" z-10 bg-white px-4 py-3 flex justify-between items-center border-b border-slate-200 md:border-none">
-          <button
-            onClick={() => handleClear()}
-            disabled={loading}
-            className="text-green-600 font-medium flex items-center gap-1 p-2 hover:bg-green-50 rounded-lg"
-          >
-            <X size={20} />
-            <span className="text-sm">CLEAR</span>
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="text-green-600 font-medium flex items-center gap-1 p-2 hover:bg-green-50 rounded-lg"
-          >
-            <Check size={20} />
-            <span className="text-sm">{loading ? "SAVING..." : "SAVE"}</span>
-          </button>
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Receipt Image
+              </label>
+              {!formData.image ? (
+                <CldUploadWidget
+                  uploadPreset={cloudinaryConfig.uploadPreset}
+                  onSuccess={(result: any) => handleUploadSuccess(result.info)}
+                  onError={handleUploadError}
+                  //@ts-ignore
+                  options={cloudinaryConfig.uploadOptions}
+                >
+                  {({ open }) => (
+                    <button
+                      type="button"
+                      onClick={() => open?.()}
+                      disabled={loading}
+                      className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-slate-300 transition-colors disabled:opacity-50"
+                    >
+                      <ImageIcon className="w-5 h-5 text-slate-400" />
+                      <span className="text-sm text-slate-600">
+                        Upload receipt image
+                      </span>
+                    </button>
+                  )}
+                </CldUploadWidget>
+              ) : (
+                <div className="relative rounded-xl overflow-hidden">
+                  <img
+                    src={formData.image.url}
+                    alt="Receipt"
+                    className="w-full h-32 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, image: null }))
+                    }
+                    disabled={loading}
+                    className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-sm hover:bg-slate-50"
+                  >
+                    <X className="w-4 h-4 text-slate-600" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Date
+              </label>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  value={dayjs(formData.date)}
+                  onChange={(newValue) => {
+                    if (newValue) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        date: newValue.toDate(),
+                      }));
+                    }
+                  }}
+                  format="MMMM D, YYYY"
+                  slotProps={{
+                    textField: { fullWidth: true },
+                    field: { className: "text-slate-900" },
+                    popper: {
+                      modifiers: [
+                        { name: "offset", options: { offset: [0, 8] } },
+                      ],
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </div>
+
+            {/* Amount */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Amount
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-2xl font-medium text-slate-900">
+                  $
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={formData.amount}
+                  onChange={handleAmountChange}
+                  placeholder="0.00"
+                  className="w-full pl-8 pr-3 py-2.5 text-right text-2xl font-medium border border-slate-200 rounded-xl outline-none focus:border-green-600 transition-colors text-slate-900 placeholder:text-slate-400"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Modals */}
-      <AddCategoryModal
-        isOpen={showAddCategory}
-        onClose={() => setShowAddCategory(false)}
-        defaultType={type}
-      />
-
-      <EditCategoryModal
-        isOpen={!!editCategory}
-        onClose={() => {
-          setEditCategory(null);
-        }}
-        category={editCategory}
-      />
-
-      <DeleteCategoryModal
-        isOpen={!!deleteCategory}
-        onClose={() => setDeleteCategory(null)}
-        category={deleteCategory}
-      />
     </div>
   );
 }

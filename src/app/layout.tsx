@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CategoryProvider } from "@/contexts/CategoryContext";
 import { UserPreferencesProvider } from "@/contexts/UserPreferencesContext";
+import { TransactionProvider } from "@/contexts/TransactionContext";
 import MainWrapper from "@/components/layout/MainWrapper";
 import Sidebar from "@/components/Sidebar";
 
@@ -30,8 +31,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
- 
-
   return (
     <html lang="en">
       <body
@@ -40,11 +39,13 @@ export default function RootLayout({
         <AuthProvider>
           <CategoryProvider>
             <UserPreferencesProvider>
-              <div className="main-wrapper">
-                {/* <Navbar /> */}
-                <Sidebar/>
-                <MainWrapper>{children}</MainWrapper>
-              </div>
+              <TransactionProvider>
+                <div className="main-wrapper">
+                  {/* <Navbar /> */}
+                  <Sidebar />
+                  <MainWrapper>{children}</MainWrapper>
+                </div>
+              </TransactionProvider>
             </UserPreferencesProvider>
           </CategoryProvider>
         </AuthProvider>
