@@ -7,16 +7,17 @@ const MainWrapper = ({ children }: { children: React.ReactNode }) => {
   const isDashboardLayout = !noMainContentStylesPaths.includes(pathname);
 
   if (!isDashboardLayout) {
-    return <main>{children}</main>;
+    // For special pages like landing, login, etc. that don't use the dashboard layout
+    return <main className="min-h-screen w-full">{children}</main>;
   }
 
   return (
-    <div className="main-content">
-      <div className="content-with-sidebar custom-scrollbar">
-        {/* Remove the default padding from children */}
+    <main className="flex-1 min-h-screen w-full lg:ml-64">
+      {/* Adds top padding on mobile to account for the mobile header */}
+      <div className="pt-14 lg:pt-0 min-h-screen overflow-y-auto">
         {children}
       </div>
-    </div>
+    </main>
   );
 };
 

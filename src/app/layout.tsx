@@ -40,7 +40,7 @@ export default function RootLayout({
           <CategoryProvider>
             <UserPreferencesProvider>
               <TransactionProvider>
-                <div className="main-wrapper">
+                <div className="flex flex-col lg:flex-row min-h-screen">
                   {/* <Navbar /> */}
                   <Sidebar />
                   <MainWrapper>{children}</MainWrapper>

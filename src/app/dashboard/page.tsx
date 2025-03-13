@@ -1,204 +1,216 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// components/Dashboard/Dashboard.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import {
+  ArrowUpDown,
+  Calendar,
+  CreditCard,
+  Wallet,
+  DollarSign,
+  PencilIcon,
+  Trash2,
+  ImageIcon,
+  Check,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCategories } from "@/contexts/CategoryContext";
-import { useUserPreferences } from "@/contexts/UserPreferencesContext";
-import { Transaction, FilterState } from "@/types/transaction";
+import { useTransactions } from "@/contexts/TransactionContext";
+import { Transaction } from "@/types/transaction";
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { DashboardHeader } from "./DashboardHeader";
-import { MonthlyOverview } from "./MonthlyOverview";
-import { TransactionTable } from "./TransactionTable";
-import { TransactionDetails } from "./TransactionDetails";
-import { FilterPanel } from "./FilterPanel";
 import TransactionInput from "@/components/TransactionInput2";
+import { TransactionDetails } from "./TransactionDetails";
+import MobileFilter from "./MobileFilter";
 
 export default function Dashboard() {
   const { isAuthenticated } = useAuth();
 
-  // States
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const {
+    transactions,
+    loading,
+    filters,
+    setFilters,
+    deleteTransaction,
+    applyFilters,
+    clearFilters,
+    fetchTransactions,
+  } = useTransactions();
+
+  // Local UI states
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    type: "all",
-    category: "all",
-    paymentMethod: "all",
-    startDate: "",
-    endDate: "",
-  });
   const [showDetails, setShowDetails] = useState(false);
+  const [sorting, setSorting] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  //   const [showTransactionForm, setShowTransactionForm] = useState(false);
-  const { categories } = useCategories();
-  const { formatAmount, getCurrencySymbol } = useUserPreferences();
+  const columnHelper = createColumnHelper<Transaction>();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchTransactions();
-    }
-  }, [isAuthenticated, selectedDate]);
+  const columns = [
+    // ... columns remain the same
+    columnHelper.accessor("date", {
+      header: () => (
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4" />
+          <span>Date</span>
+        </div>
+      ),
+      cell: (info) => (
+        <div className="text-sm text-slate-600">
+          {new Date(info.getValue()).toLocaleDateString()}
+        </div>
+      ),
+    }),
+    columnHelper.accessor("description", {
+      header: "Description",
+      cell: (info) => (
+        <div className="flex items-center gap-2">
+          {info.row.original.image && (
+            <ImageIcon className="w-4 h-4 text-blue-500" />
+          )}
+          <span className="text-sm font-medium text-slate-800">
+            {info.getValue()}
+          </span>
+        </div>
+      ),
+    }),
+    columnHelper.accessor("paymentMethod", {
+      header: "Payment",
+      cell: (info) => (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+          {info.getValue() === "card" ? (
+            <CreditCard className="w-3 h-3" />
+          ) : (
+            <Wallet className="w-3 h-3" />
+          )}
+          {info.getValue()}
+        </span>
+      ),
+    }),
+    columnHelper.accessor("category", {
+      header: "Category",
+      cell: (info) => (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+          {info.getValue()}
+        </span>
+      ),
+    }),
+    columnHelper.accessor("amount", {
+      header: () => (
+        <div className="text-right flex items-center justify-end gap-2">
+          <span>Amount</span>
+          <ArrowUpDown className="w-3 h-3" />
+        </div>
+      ),
+      cell: (info) => {
+        const transaction = info.row.original;
+        return (
+          <div className="text-right flex items-center justify-end gap-1">
+            <DollarSign
+              className={`w-4 h-4 ${
+                transaction.type === "income"
+                  ? "text-green-500"
+                  : "text-red-500"
+              }`}
+            />
+            <span
+              className={`text-sm font-medium ${
+                transaction.type === "income"
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {Math.abs(info.getValue()).toFixed(2)}
+            </span>
+          </div>
+        );
+      },
+    }),
+    columnHelper.display({
+      id: "actions",
+      cell: (info) => (
+        <div className="flex items-center justify-end gap-2 ">
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent row click event
+              handleEdit(info.row.original);
+            }}
+            className="p-1 hover:bg-slate-100 rounded-lg"
+            disabled={isProcessing}
+          >
+            <PencilIcon className="w-4 h-4 text-slate-500" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent row click event
+              handleDelete(info.row.original);
+            }}
+            className="p-1 hover:bg-red-100 rounded-lg"
+            disabled={isProcessing}
+          >
+            <Trash2 className="w-4 h-4 text-red-500" />
+          </button>
+        </div>
+      ),
+    }),
+  ];
 
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-      const year = selectedDate.getFullYear();
-      const month = selectedDate.getMonth() + 1;
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/monthly/${year}/${month}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch transactions");
-      }
-
-      const data = await response.json();
-
-      setTransactions(data || []); // Provide default empty array
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching transactions:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch transactions"
-      );
-      setTransactions([]); // Set empty array on error
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteTransaction = async (id: string) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/${id}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete transaction');
-      }
-      
-      // Refresh your transactions list here
-      fetchTransactions();
-    } catch (error) {
-      console.error('Error deleting transaction:', error);
-    }
-  };
-
-  // Filter transactions with improved logging
-  const filteredTransactions = transactions.filter((transaction) => {
-    if (!transaction) {
-      console.log("Found null transaction");
-      return false;
-    }
-
-    // Log each filter condition
-    const typeMatch =
-      filters.type === "all" || transaction.type === filters.type;
-    const categoryMatch =
-      filters.category === "all" || transaction.category === filters.category;
-    const paymentMatch =
-      filters.paymentMethod === "all" ||
-      transaction.paymentMethod === filters.paymentMethod;
-
-    let dateMatch = true;
-    if (filters.startDate) {
-      dateMatch =
-        dateMatch && new Date(transaction.date) >= new Date(filters.startDate);
-    }
-    if (filters.endDate) {
-      dateMatch =
-        dateMatch && new Date(transaction.date) <= new Date(filters.endDate);
-    }
-
-    // console.log(`Transaction ${transaction._id} matches:`, {
-    //   typeMatch,
-    //   categoryMatch,
-    //   paymentMatch,
-    //   dateMatch,
-    // });
-
-    return typeMatch && categoryMatch && paymentMatch && dateMatch;
+  const table = useReactTable({
+    data: transactions,
+    columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
-  const navigateMonth = (direction: "prev" | "next") => {
-    setSelectedDate((currentDate) => {
-      const newDate = new Date(currentDate);
-      if (direction === "prev") {
-        newDate.setMonth(newDate.getMonth() - 1);
-      } else {
-        newDate.setMonth(newDate.getMonth() + 1);
-      }
-      return newDate;
-    });
+  const handleEdit = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setShowTransactionForm(true);
   };
 
-  // Filter transactions with null check
-
-  // Group transactions by date with null check
-  const groupedTransactions = filteredTransactions.reduce(
-    (groups, transaction) => {
-      if (!transaction) return groups;
-
+  const handleDelete = async (transaction: Transaction) => {
+    if (confirm("Are you sure you want to delete this transaction?")) {
       try {
-        const date = new Date(transaction.date);
-        if (isNaN(date.getTime())) {
-          console.error("Invalid date for transaction:", transaction);
-          return groups;
-        }
-
-        const dateKey = date.toISOString().split("T")[0];
-        const formattedDate = date.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        });
-
-        if (!groups[dateKey]) {
-          groups[dateKey] = {
-            formattedDate,
-            transactions: [],
-          };
-        }
-        groups[dateKey].transactions.push(transaction);
-
-        // Sort transactions within each day by date (newest first)
-        groups[dateKey].transactions.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-
-        return groups;
+        setIsProcessing(true);
+        await deleteTransaction(transaction._id);
+        // Force a refresh of the transaction data
+        await fetchTransactions(true);
       } catch (error) {
-        console.error("Error processing transaction:", transaction, error);
-        return groups;
+        console.error("Failed to delete transaction:", error);
+        alert("Failed to delete transaction. Please try again.");
+      } finally {
+        setIsProcessing(false);
       }
-    },
-    {}
-  );
-  const sortedGroupedTransactions = Object.entries(groupedTransactions)
-    .sort(([dateKeyA], [dateKeyB]) => {
-      const dateA = new Date(dateKeyA);
-      const dateB = new Date(dateKeyB);
-      return dateB.getTime() - dateA.getTime();
-    })
-    .reduce((acc, [key, value]) => {
-      acc[key] = value;
-      return acc;
-    }, {});
-  // Calculate totals with null check
-  const totals = filteredTransactions.reduce(
-    (acc, t) => ({
-      income: acc.income + (t?.type === "income" ? t.amount : 0),
-      expense: acc.expense + (t?.type === "expense" ? t.amount : 0),
-    }),
-    { income: 0, expense: 0 }
-  );
+    }
+  };
+
+  // Handle row click to show transaction details
+  const handleRowClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setShowDetails(true);
+  };
+
+  const handleTransactionSuccess = async () => {
+    try {
+      setIsProcessing(true);
+      // Force a refresh of the transaction data
+      await fetchTransactions(true);
+      setShowTransactionForm(false);
+      setSelectedTransaction(null);
+    } catch (error) {
+      console.error("Failed to refresh transactions:", error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -210,80 +222,220 @@ export default function Dashboard() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-slate-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-slate-50">
-      <DashboardHeader
-        onShowFilters={() => setShowFilters(true)}
-        onAddTransaction={() => setShowTransactionForm(true)}
-        filters={filters}
-      />
+      <DashboardHeader onAddTransaction={() => setShowTransactionForm(true)} />
+      <div className="bg-white p-4 rounded-lg shadow">
+        {/* Filter Panel */}
+        <MobileFilter>
 
-      <div className="max-w-7xl mx-auto px-4 py-2">
-        <MonthlyOverview
-          selectedDate={selectedDate}
-          onNavigateMonth={navigateMonth}
-          totals={totals}
-          formatAmount={formatAmount}
-        />
+        
+          <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 mb-6 max-w-min">
+            <div className="flex flex-col items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+                  disabled={isProcessing}
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={async () => {
+                    setIsProcessing(true);
+                    await applyFilters();
+                    setIsProcessing(false);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center gap-2"
+                  disabled={isProcessing || loading}
+                >
+                  <Check className="w-4 h-4" />
+                  Apply Filters
+                </button>
+              </div>
+            </div>
 
-        <TransactionTable
-          transactions={filteredTransactions}
-          showDetails={setShowDetails}
-          formatAmount={formatAmount}
-          filters={filters}
-          onFilterChange={setFilters}
-          setSelectedTransaction={setSelectedTransaction}
-          setShowTransactionForm={setShowTransactionForm}
-          onDeleteTransaction={handleDeleteTransaction}
-        />
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                  Type
+                </label>
+                <select
+                  value={filters.type}
+                  onChange={(e) =>
+                    setFilters({ ...filters, type: e.target.value as any })
+                  }
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:border-green-500"
+                  disabled={isProcessing}
+                >
+                  <option value="all">All Types</option>
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                  Payment Method
+                </label>
+                <select
+                  value={filters.paymentMethod}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      paymentMethod: e.target.value as any,
+                    })
+                  }
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:border-green-500"
+                  disabled={isProcessing}
+                >
+                  <option value="all">All Methods</option>
+                  <option value="card">Card</option>
+                  <option value="cash">Cash</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                  From
+                </label>
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) =>
+                    setFilters({ ...filters, startDate: e.target.value })
+                  }
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:border-green-500"
+                  disabled={isProcessing}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                  To
+                </label>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) =>
+                    setFilters({ ...filters, endDate: e.target.value })
+                  }
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:border-green-500"
+                  disabled={isProcessing}
+                />
+              </div>
+            </div>
+          </div>
+          </MobileFilter>
+       
+
+        {/* Loading Indicator */}
+        {loading && (
+          <div className="text-center p-4 bg-white rounded-xl border border-slate-200/60 shadow-sm mb-6">
+            <div className="text-slate-600">Loading transactions...</div>
+          </div>
+        )}
+
+        {/* Transaction Table */}
+        <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr
+                    key={headerGroup.id}
+                    className="border-b border-slate-200 bg-slate-50/50"
+                  >
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        onClick={header.column.getToggleSortingHandler()}
+                        className="text-left py-3 px-4 text-sm font-medium text-slate-600 cursor-pointer hover:text-slate-900"
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {transactions.length === 0 && !loading ? (
+                  <tr>
+                    <td
+                      colSpan={columns.length}
+                      className="py-8 px-4 text-center text-slate-500"
+                    >
+                      No transactions found. Add a new transaction to get
+                      started.
+                    </td>
+                  </tr>
+                ) : (
+                  table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-b border-slate-200 hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                      onClick={() => handleRowClick(row.original)}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="py-3 px-4">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
+      {/* Modals */}
       {showTransactionForm && (
         <TransactionInput
-          mode={selectedTransaction!=null ? "edit" : "create"}
+          mode={selectedTransaction ? "edit" : "create"}
           initialData={selectedTransaction || undefined}
           onClose={() => {
             setShowTransactionForm(false);
             setSelectedTransaction(null);
           }}
-          onSuccess={(transaction) => {
-            setTransactions((prev) => {
-              if (selectedTransaction) {
-                // Update existing transaction
-                return prev.map((t) =>
-                  t._id === transaction._id ? transaction : t
-                );
-              }
-              // Add new transaction
-              return [transaction, ...prev];
-            });
-            setShowTransactionForm(false);
-            setSelectedTransaction(null);
-            fetchTransactions(); // Refresh data
-          }}
+          onSuccess={handleTransactionSuccess}
         />
       )}
 
-      {showFilters && (
-        <FilterPanel
-          onClose={() => setShowFilters(false)}
-          filters={filters}
-          setFilters={setFilters}
-        />
-      )}
-
-      {showDetails && (
+      {showDetails && selectedTransaction && (
         <TransactionDetails
           transaction={selectedTransaction}
-          onClose={() => setShowDetails(false)} // Close the details view when the close button is clicked(null)}
+          onClose={() => {
+            setShowDetails(false);
+            setSelectedTransaction(null);
+          }}
+          onEdit={(transaction) => {
+            setShowDetails(false);
+            setSelectedTransaction(transaction);
+            setShowTransactionForm(true);
+          }}
+          onDelete={async (transactionId) => {
+            try {
+              setIsProcessing(true);
+              setShowDetails(false);
+              await deleteTransaction(transactionId);
+              await fetchTransactions(true);
+            } catch (error) {
+              console.error("Failed to delete transaction:", error);
+              alert("Failed to delete transaction. Please try again.");
+            } finally {
+              setIsProcessing(false);
+              setSelectedTransaction(null);
+            }
+          }}
         />
       )}
     </div>

@@ -6,21 +6,17 @@ import { FilterState } from "@/types/transaction";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 interface DashboardHeaderProps {
-  onShowFilters: () => void;
   onAddTransaction: () => void;
-  filters: FilterState;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
-  onShowFilters,
   onAddTransaction,
-  filters,
 }) => {
   const { preferences, formatAmount } = useUserPreferences();
   return (
     <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between py-4 gap-4">
+        <div className="flex  flex-row items-center justify-between py-4 gap-4">
           {/* Left Section */}
           <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
             <h1 className="text-xl font-semibold text-slate-800">
@@ -28,7 +24,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </h1>
 
             {/* Balances - Desktop */}
-            <div className="hidden md:flex items-center divide-x divide-slate-200">
+            {/* <div className="hidden md:flex items-center divide-x divide-slate-200">
               <div className="pr-6">
                 <div className="flex items-center gap-2">
                   <Wallet className="w-4 h-4 text-slate-400" />
@@ -49,10 +45,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                   </span>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Balances - Mobile */}
-            <div className="flex md:hidden items-center gap-4">
+            {/* <div className="flex md:hidden items-center gap-4">
               <div className="flex-1 p-3 bg-slate-50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <Wallet className="w-4 h-4 text-slate-400" />
@@ -75,7 +71,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Right Section */}
