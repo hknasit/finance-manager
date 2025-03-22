@@ -21,7 +21,7 @@ export default async function ResetPasswordPage({ params }: Props) {
   // Validate token
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center text-gray-800">
         <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-red-600 mb-2">Invalid Reset Link</h2>
           <p className="text-gray-600">

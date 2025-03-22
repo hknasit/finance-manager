@@ -23,7 +23,7 @@ const LandingPage = () => {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_PATH;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-gray-800">
       {/* Hero Section */}
       <header className="bg-white md:bg-gradient-to-r md:from-green-50 md:to-blue-50">
         <nav className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
@@ -34,7 +34,7 @@ const LandingPage = () => {
           <div className="hidden md:flex items-center space-x-8">
             <a
               href="#features"
-              className="text-gray-900 font-medium hover:text-green-600"
+              className="text-gray-800 font-medium hover:text-green-600"
             >
               Features
             </a>
@@ -133,8 +133,8 @@ const LandingPage = () => {
                         <CreditCard className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
                       </div>
                       <div className="ml-3">
-                        <p className="text-sm font-medium">Rent Payment</p>
-                        <p className="text-xs text-gray-500">Card Payment</p>
+                        <p className="text-sm font-medium text-gray-900">Rent Payment</p>
+                        <p className="text-xs text-gray-600">Card Payment</p>
                       </div>
                     </div>
                     <p className="font-medium text-red-500 text-sm md:text-base">

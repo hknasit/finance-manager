@@ -99,7 +99,7 @@ export default function RegisterPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-gray-800">
       <nav className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center">
             <DollarSign className="w-6 md:w-8 h-6 md:h-8 text-green-600" />

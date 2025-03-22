@@ -66,7 +66,7 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 text-gray-800">
       {error && (
         <div className="p-3 bg-red-50 text-red-500 text-sm rounded-lg">
           {error}
