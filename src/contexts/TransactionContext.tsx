@@ -52,7 +52,7 @@ const TransactionContext = createContext<TransactionContextType | undefined>(und
 export function TransactionProvider({ children }: { children: React.ReactNode }) {
   // States
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true );
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationData>(defaultPagination);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);

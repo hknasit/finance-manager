@@ -228,8 +228,6 @@ export default function Dashboard() {
       <div className="bg-white p-4 rounded-lg shadow">
         {/* Filter Panel */}
         <MobileFilter>
-
-        
           <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 mb-6 max-w-min">
             <div className="flex flex-col items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
@@ -327,74 +325,72 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          </MobileFilter>
-       
+        </MobileFilter>
 
         {/* Loading Indicator */}
-        {loading && (
+        {loading ? (
           <div className="text-center p-4 bg-white rounded-xl border border-slate-200/60 shadow-sm mb-6">
             <div className="text-slate-600">Loading transactions...</div>
           </div>
-        )}
-
-        {/* Transaction Table */}
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr
-                    key={headerGroup.id}
-                    className="border-b border-slate-200 bg-slate-50/50"
-                  >
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        onClick={header.column.getToggleSortingHandler()}
-                        className="text-left py-3 px-4 text-sm font-medium text-slate-600 cursor-pointer hover:text-slate-900"
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {transactions.length === 0 && !loading ? (
-                  <tr>
-                    <td
-                      colSpan={columns.length}
-                      className="py-8 px-4 text-center text-slate-500"
-                    >
-                      No transactions found. Add a new transaction to get
-                      started.
-                    </td>
-                  </tr>
-                ) : (
-                  table.getRowModel().rows.map((row) => (
+        ) : (
+          <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  {table.getHeaderGroups().map((headerGroup) => (
                     <tr
-                      key={row.id}
-                      className="border-b border-slate-200 hover:bg-slate-50/50 transition-colors group cursor-pointer"
-                      onClick={() => handleRowClick(row.original)}
+                      key={headerGroup.id}
+                      className="border-b border-slate-200 bg-slate-50/50"
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="py-3 px-4">
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          onClick={header.column.getToggleSortingHandler()}
+                          className="text-left py-3 px-4 text-sm font-medium text-slate-600 cursor-pointer hover:text-slate-900"
+                        >
                           {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
+                            header.column.columnDef.header,
+                            header.getContext()
                           )}
-                        </td>
+                        </th>
                       ))}
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </thead>
+                <tbody>
+                  {transactions.length === 0 && !loading ? (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        className="py-8 px-4 text-center text-slate-500"
+                      >
+                        No transactions found. Add a new transaction to get
+                        started.
+                      </td>
+                    </tr>
+                  ) : (
+                    table.getRowModel().rows.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-slate-200 hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                        onClick={() => handleRowClick(row.original)}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td key={cell.id} className="py-3 px-4">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modals */}

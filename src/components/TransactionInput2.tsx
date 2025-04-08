@@ -73,8 +73,8 @@ export default function TransactionInput({
   const [error, setError] = useState("");
   const [showCategories, setShowCategories] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-console.log(mode+" :::  mode in the input")
-console.log(initialData)
+  console.log(mode + " :::  mode in the input");
+  console.log(initialData);
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -173,19 +173,24 @@ console.log(initialData)
     <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-start justify-center px-4 z-40">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl flex flex-col max-h-[85vh] mt-4 mb-20">
         {/* Header */}
-        <div className="sticky top-0 p-3 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl z-10">
+        <div className="sticky top-0 p-3 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl z-10 shadow-md">
           <button
             onClick={onClose}
             disabled={loading}
-            className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-100 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105"
           >
             <X size={18} />
             <span className="text-sm">Close</span>
           </button>
+          {error && (
+            <div className="p-2 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium flex items-center gap-1.5 shadow-sm">
+              {error}
+            </div>
+          )}
           <button
             onClick={handleSave}
             disabled={loading}
-            className="text-green-600 hover:text-green-700 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-green-50 rounded-lg transition-colors"
+            className="text-green-600 hover:text-green-700 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-green-50 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105"
           >
             <Check size={18} />
             <span className="text-sm">
@@ -196,12 +201,6 @@ console.log(initialData)
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 space-y-3.5">
-            {error && (
-              <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
-                {error}
-              </div>
-            )}
-
             {/* Transaction Type */}
             <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
               {["income", "expense"].map((t) => (
@@ -433,6 +432,11 @@ console.log(initialData)
                   value={formData.amount}
                   onChange={handleAmountChange}
                   placeholder="0.00"
+                  style={{
+                    appearance: "textfield",
+                    WebkitAppearance: "textfield",
+                    MozAppearance: "textfield",
+                  }}
                   className="w-full pl-8 pr-3 py-2.5 text-right text-2xl font-medium border border-slate-200 rounded-xl outline-none focus:border-green-600 transition-colors text-slate-900 placeholder:text-slate-400"
                   disabled={loading}
                 />

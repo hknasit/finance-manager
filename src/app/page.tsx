@@ -92,10 +92,10 @@ const LandingPage = () => {
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </a>
                 <a
-                  href="#features"
+                  href={`${baseUrl}/login`}
                   className="inline-flex items-center justify-center px-6 py-3 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors text-base md:text-lg"
                 >
-                  See Features
+                  Login
                 </a>
               </div>
             </div>
