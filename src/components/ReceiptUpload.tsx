@@ -49,17 +49,48 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
 
   const startCamera = async () => {
     setIsCapturing(true);
+    setError(null);
+    
     try {
+      console.log("Checking camera support...");
+      // First check if the browser supports getUserMedia
+      if (!navigator.mediaDevices) {
+        console.error("mediaDevices not available");
+        throw new Error('Your browser does not support camera access (mediaDevices API missing)');
+      }
+      
+      if (!navigator.mediaDevices.getUserMedia) {
+        console.error("getUserMedia not available");
+        throw new Error('Your browser does not support camera access (getUserMedia missing)');
+      }
+      
+      console.log("Requesting camera access...");
+      // Log the origin to verify if it's secure
+      console.log("Current origin:", window.location.origin);
+      console.log("Is secure context:", window.isSecureContext);
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } 
       });
+      
+      console.log("Camera access granted!", stream.getVideoTracks());
+      // Front camera
+
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setError('Failed to access camera. Please check permissions.');
+      console.error('Detailed camera error:', err);
+      // Log every property of the error object
+      if (err instanceof Error) {
+        console.log("Error name:", err.name);
+        console.log("Error message:", err.message);
+        console.log("Error stack:", err.stack);
+      }
+      
+      // More specific error handling...
+      setError('Failed to access camera. Please check permissions and browser console for details.');
       setIsCapturing(false);
     }
   };
