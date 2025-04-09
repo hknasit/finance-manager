@@ -69,14 +69,6 @@ export async function PUT(req: NextRequest, params: ParamsPut) {
           : currentBankBalance - balanceAdjustment;
     }
 
-    // Validate balances
-    if (newCashBalance < 0 || newBankBalance < 0) {
-      return NextResponse.json(
-        { message: "Insufficient balance" },
-        { status: 400 }
-      );
-    }
-
     // Update user preferences with new balances
     await UserPreference.findOneAndUpdate(
       { user: authPayload.id },
@@ -110,44 +102,6 @@ export async function PUT(req: NextRequest, params: ParamsPut) {
         cashBalance: newCashBalance,
         bankBalance: newBankBalance,
       },
-    });
-  } catch (error) {
-    console.error("Error updating transaction:", error);
-    return NextResponse.json(
-      { message: "Error updating transaction" },
-      { status: 500 }
-    );
-  }
-}
-
-// Patch specific fields
-export async function PATCH(req: NextRequest, params: ParamsDelete) {
-  try {
-    const { id } = await params.params;
-    const authPayload = await verifyAuth();
-    if (!authPayload.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    await connectDB();
-    const updates = await req.json();
-
-    const transaction = await Transaction.findOneAndUpdate(
-      { _id: id, user: authPayload.id },
-      { $set: updates },
-      { new: true }
-    );
-
-    if (!transaction) {
-      return NextResponse.json(
-        { message: "Transaction not found" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      message: "Transaction updated successfully",
-      transaction,
     });
   } catch (error) {
     console.error("Error updating transaction:", error);

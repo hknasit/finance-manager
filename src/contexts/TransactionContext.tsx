@@ -2,7 +2,12 @@
 "use client";
 
 import React, { createContext, useContext, useState } from "react";
-import { Transaction, FilterState, TransactionTotals } from "@/types/transaction";
+import {
+  Transaction,
+  FilterState,
+  TransactionTotals,
+} from "@/types/transaction";
+import { useUserPreferences } from "./UserPreferencesContext";
 
 interface PaginationData {
   currentPage: number;
@@ -19,12 +24,17 @@ interface TransactionContextType {
   filters: FilterState;
   totals: TransactionTotals;
   pagination: PaginationData;
-  
+
   // Actions
   setFilters: (filters: FilterState) => void;
   fetchTransactions: (reset?: boolean) => Promise<void>;
-  createTransaction: (transactionData: Partial<Transaction>) => Promise<Transaction>;
-  updateTransaction: (id: string, transactionData: Partial<Transaction>) => Promise<Transaction>;
+  createTransaction: (
+    transactionData: Partial<Transaction>
+  ) => Promise<Transaction>;
+  updateTransaction: (
+    id: string,
+    transactionData: Partial<Transaction>
+  ) => void;
   deleteTransaction: (id: string) => Promise<void>;
   loadMoreTransactions: () => Promise<void>;
   applyFilters: () => Promise<void>;
@@ -36,7 +46,7 @@ const defaultPagination: PaginationData = {
   totalPages: 1,
   totalTransactions: 0,
   hasMore: false,
-  limit: 25
+  limit: 25,
 };
 
 const defaultFilters: FilterState = {
@@ -47,19 +57,27 @@ const defaultFilters: FilterState = {
   endDate: "",
 };
 
-const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
+const TransactionContext = createContext<TransactionContextType | undefined>(
+  undefined
+);
 
-export function TransactionProvider({ children }: { children: React.ReactNode }) {
+export function TransactionProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   // States
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true );
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<PaginationData>(defaultPagination);
+  const [pagination, setPagination] =
+    useState<PaginationData>(defaultPagination);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [totals, setTotals] = useState<TransactionTotals>({
     income: 0,
     expense: 0,
   });
+  const { setPreferences } = useUserPreferences();
 
   // Fetch transactions with filters and pagination
   const fetchTransactions = async (reset: boolean = false) => {
@@ -73,12 +91,14 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
         limit: pagination.limit.toString(),
         ...(filters.type !== "all" && { type: filters.type }),
         ...(filters.category !== "all" && { category: filters.category }),
-        ...(filters.paymentMethod !== "all" && { paymentMethod: filters.paymentMethod }),
+        ...(filters.paymentMethod !== "all" && {
+          paymentMethod: filters.paymentMethod,
+        }),
         ...(filters.startDate && { startDate: filters.startDate }),
         ...(filters.endDate && { endDate: filters.endDate }),
       });
 
-      console.log('Fetching with params:', queryParams.toString());
+      console.log("Fetching with params:", queryParams.toString());
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions?${queryParams}`
@@ -94,9 +114,9 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
       if (reset) {
         setTransactions(data.transactions);
       } else {
-        setTransactions(prev => [...prev, ...data.transactions]);
+        setTransactions((prev) => [...prev, ...data.transactions]);
       }
-      
+
       // Update pagination and totals
       setPagination(data.pagination);
       setTotals(data.totals);
@@ -104,7 +124,9 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
       return data;
     } catch (err) {
       console.error("Error fetching transactions:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch transactions");
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch transactions"
+      );
       if (reset) {
         setTransactions([]);
       }
@@ -117,9 +139,9 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
   // Load more transactions (pagination)
   const loadMoreTransactions = async () => {
     if (!pagination.hasMore || loading) return;
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
-      currentPage: prev.currentPage + 1
+      currentPage: prev.currentPage + 1,
     }));
     await fetchTransactions(false);
   };
@@ -138,23 +160,38 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
   const createTransaction = async (transactionData: Partial<Transaction>) => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(transactionData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/add`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(transactionData),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to create transaction');
+        throw new Error(error.message || "Failed to create transaction");
       }
 
-      const newTransaction = await response.json();
-      return newTransaction;
+      const data = await response.json();
+      setPreferences((prev) => ({
+        ...prev,
+        bankBalance: data.balances.bankBalance,
+        cashBalance: data.balances.cashBalance,
+      }));
+      // Reorder transactions based on date
+
+      setTransactions((prev) =>
+        [...prev, data.transaction].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        )
+      );
+      return data.transaction;
     } catch (error) {
-      console.error('Error creating transaction:', error);
+      console.error("Error creating transaction:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -162,26 +199,44 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
   };
 
   // Update transaction
-  const updateTransaction = async (id: string, transactionData: Partial<Transaction>) => {
+  const updateTransaction = async (
+    id: string,
+    transactionData: Partial<Transaction>
+  ) => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(transactionData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(transactionData),
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to update transaction');
+        throw new Error(error.message || "Failed to update transaction");
       }
 
-      const updatedTransaction = await response.json();
-      return updatedTransaction;
+      const updatedTransaction = await response
+        .json()
+        .then((data) => data.transaction);
+
+      setTransactions((prev) =>
+        prev
+          .map((t) => {
+            if (t._id === id) {
+              return updatedTransaction;
+            }
+            return t;
+          })
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      );
     } catch (error) {
-      console.error('Error updating transaction:', error);
+      console.error("Error updating transaction:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -194,21 +249,26 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
       setLoading(true);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/${id}`,
-        { method: 'DELETE' }
+        { method: "DELETE" }
       );
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to delete transaction');
+        throw new Error(error.message || "Failed to delete transaction");
+      }
+
+      if (response.ok) {
+        setTransactions((prev) =>
+          prev.filter((transaction) => transaction._id !== id)
+        );
       }
     } catch (error) {
-      console.error('Error deleting transaction:', error);
+      console.error("Error deleting transaction:", error);
       throw error;
     } finally {
       setLoading(false);
     }
   };
-
 
   const value = {
     transactions,
@@ -237,7 +297,9 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
 export function useTransactions() {
   const context = useContext(TransactionContext);
   if (context === undefined) {
-    throw new Error("useTransactions must be used within a TransactionProvider");
+    throw new Error(
+      "useTransactions must be used within a TransactionProvider"
+    );
   }
   return context;
 }

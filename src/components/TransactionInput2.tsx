@@ -28,6 +28,7 @@ import type {
 } from "@/types/cloudinary";
 import type { Transaction } from "@/types/transaction";
 import { cloudinaryConfig } from "@/lib/config/cloudinary";
+import { useTransactions } from "@/contexts/TransactionContext";
 
 interface TransactionInputProps {
   mode: "create" | "edit";
@@ -54,7 +55,8 @@ export default function TransactionInput({
 }: TransactionInputProps) {
   const { isAuthenticated } = useAuth();
   const { categories } = useCategories();
-  const { preferences, setPreferences } = useUserPreferences();
+  const { preferences } = useUserPreferences();
+  const { updateTransaction, createTransaction } = useTransactions();
   const categoryRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState<FormState>({
@@ -73,8 +75,7 @@ export default function TransactionInput({
   const [error, setError] = useState("");
   const [showCategories, setShowCategories] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  console.log(mode + " :::  mode in the input");
-  console.log(initialData);
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -128,39 +129,27 @@ export default function TransactionInput({
       setLoading(true);
       setError("");
 
-      const endpoint =
-        mode === "create"
-          ? `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/add`
-          : `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/${initialData?._id}`;
-
-      const method = mode === "create" ? "POST" : "PUT";
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      if (mode === "edit") {
+        const body = {
           ...formData,
           amount: parseFloat(formData.amount),
-          date: dayjs(formData.date).format("YYYY-MM-DD"),
+          date: formData.date.toISOString(),
           currentBankBalance: preferences.bankBalance,
           currentCashBalance: preferences.cashBalance,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to save transaction");
+        };
+        await updateTransaction(initialData?._id, body);
+      } else {
+        const body = {
+          ...formData,
+          amount: parseFloat(formData.amount),
+          date: formData.date.toISOString(),
+          currentBankBalance: preferences.bankBalance,
+          currentCashBalance: preferences.cashBalance,
+        };
+        const transaction = await createTransaction(body);
+        onSuccess(transaction);
       }
 
-      const data = await response.json();
-
-      setPreferences((prev) => ({
-        ...prev,
-        bankBalance: data.balances.bankBalance,
-        cashBalance: data.balances.cashBalance,
-      }));
-
-      onSuccess(data.transaction);
       onClose();
     } catch (err: any) {
       setError(err.message);

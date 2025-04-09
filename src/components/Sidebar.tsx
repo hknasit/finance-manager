@@ -67,15 +67,8 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold text-lg">CashFlow</span>
-          </div>
-          <button
+      <div className="lg:hidden fixed flex align-middle justify-between top-0 left-0 right-0 z-40 bg-white border-b px-4 py-3 text-gray-900">
+      <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
           >
@@ -85,6 +78,14 @@ export default function Sidebar() {
               <Menu className="w-6 h-6" />
             )}
           </button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-semibold text-lg text-gray-900">CashFlow</span>
+          </div>
+          
         </div>
       </div>
 

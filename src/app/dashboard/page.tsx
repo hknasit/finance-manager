@@ -188,8 +188,7 @@ export default function Dashboard() {
       try {
         setIsProcessing(true);
         await deleteTransaction(transaction._id);
-        // Force a refresh of the transaction data
-        await fetchTransactions(true);
+
       } catch (error) {
         console.error("Failed to delete transaction:", error);
         alert("Failed to delete transaction. Please try again.");
@@ -209,7 +208,7 @@ export default function Dashboard() {
     try {
       setIsProcessing(true);
       // Force a refresh of the transaction data
-      await fetchTransactions(true);
+      
       setShowTransactionForm(false);
       setSelectedTransaction(null);
     } catch (error) {
