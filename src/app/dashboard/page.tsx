@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import {
   ArrowUpDown,
   Calendar,
@@ -48,6 +48,13 @@ export default function Dashboard() {
   const [showDetails, setShowDetails] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchTransactions();
+    }
+  }, [isAuthenticated]);
 
   const columnHelper = createColumnHelper<Transaction>();
 

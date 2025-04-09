@@ -1,7 +1,7 @@
 // contexts/TransactionContext.tsx
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { Transaction, FilterState, TransactionTotals } from "@/types/transaction";
 
 interface PaginationData {
@@ -209,10 +209,6 @@ export function TransactionProvider({ children }: { children: React.ReactNode })
     }
   };
 
-  // Initial fetch on mount
-  useEffect(() => {
-    fetchTransactions(true);
-  }, []); // Only fetch on mount
 
   const value = {
     transactions,

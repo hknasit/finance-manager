@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import Transaction from "@/models/transaction.model";
 import { verifyAuth } from "@/lib/auth";
+import connectDB from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
     if (paymentMethod && paymentMethod !== 'all') {
       filterQuery.paymentMethod = paymentMethod;
     }
-
+    await connectDB();
     // Ensure database connection
     if (!mongoose.connections[0].readyState) {
       await mongoose.connect(process.env.MONGODB_URI!);

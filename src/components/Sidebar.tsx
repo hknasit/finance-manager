@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LogOut,
   Menu,
@@ -23,6 +23,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
+  const { push } = useRouter();
 
   const navigation = [
     { name: "Home", href: "/dashboard", icon: Home },
@@ -36,9 +37,10 @@ export default function Sidebar() {
   const handleTransactionSuccess = async () => {
     try {
       setShowTransactionForm(false);
+      // Navigate to the dashboard page
+      push("/dashboard");
     } catch (error) {
       console.error("Failed to refresh transactions:", error);
-    } finally {
     }
   };
   useEffect(() => {
@@ -54,6 +56,11 @@ export default function Sidebar() {
       document.body.classList.remove("overflow-hidden");
     }
   }, [isMobileMenuOpen]);
+
+  function handleTransactionButton() {
+    setShowTransactionForm(true);
+    setIsMobileMenuOpen(false);
+  }
 
   if (!isAuthenticated) return null;
 
@@ -96,7 +103,10 @@ export default function Sidebar() {
 
         {/* Quick Action */}
         <div className="p-4">
-          <button onClick={() => setShowTransactionForm(true)} className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 px-4 rounded-xl font-medium hover:bg-green-700 transition-colors">
+          <button
+            onClick={handleTransactionButton}
+            className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 px-4 rounded-xl font-medium hover:bg-green-700 transition-colors"
+          >
             <PlusCircle className="w-5 h-5" />
             Add Transaction
           </button>
@@ -108,7 +118,6 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={showTransactionForm ? "" : item.href}
-              
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg mb-1 transition-colors ${
                 isActive(item.href)
                   ? "bg-green-50 text-green-600"
