@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import Transaction from "@/models/transaction.model";
 import { verifyAuth } from "@/lib/auth";
+import connectDB from "@/lib/db";
 
 interface Params {
   params: Promise<{
@@ -12,22 +13,14 @@ interface Params {
     month: number;
   }>;
 }
-
-export async function GET(request: NextRequest, params: Params) {
+export async function GET(request: NextRequest, { params }: Params) {
   try {
-    // Get pagination parameters from URL
-    const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "25");
-    const skip = (page - 1) * limit;
+    // Connect to the database first
+    await connectDB();
 
-    // Get filter parameters
-    const type = searchParams.get("type");
-    const category = searchParams.get("category");
-    const paymentMethod = searchParams.get("paymentMethod");
-
-    // Validate year and month parameters first
-    const { year, month } = await params.params;
+    // Parse and validate year and month
+    const year =  (await params).year;
+    const month =  (await params).month;
 
     if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
       return NextResponse.json(
@@ -38,82 +31,49 @@ export async function GET(request: NextRequest, params: Params) {
 
     // Get and verify auth token
     const token = await verifyAuth();
-
-    // Convert userId to ObjectId
     const userId = new mongoose.Types.ObjectId(token.id);
 
-    // Calculate start and end dates for the month
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    // Calculate start and end dates for the month (in UTC)
+    const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+    const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
 
     // Build filter query
-    const filterQuery: any = {
+    const filterQuery = {
       user: userId,
-      date: { $gte: startDate, $lte: endDate },
+      date: { $gte: startDate, $lte: endDate }
     };
 
-    if (type && type !== "all") {
-      filterQuery.type = type;
-    }
-    if (category && category !== "all") {
-      filterQuery.category = category;
-    }
-    if (paymentMethod && paymentMethod !== "all") {
-      filterQuery.paymentMethod = paymentMethod;
-    }
-
-    // Ensure database connection
-    if (!mongoose.connections[0].readyState) {
-      await mongoose.connect(process.env.MONGODB_URI!);
-    }
-
-    // Get total count for pagination
-    const totalTransactions = await Transaction.countDocuments(filterQuery);
-    const totalPages = Math.ceil(totalTransactions / limit);
-
-    // Fetch transactions with pagination
+    // Fetch all transactions for the month (no pagination for analytics)
     const transactions = await Transaction.find(filterQuery)
-      .sort({ date: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
-      .then((docs) => JSON.parse(JSON.stringify(docs)));
+      .sort({ date: 1 }) // Sort by date ascending for time series
+      .lean();
 
-    // Calculate totals for income and expense
+    // Calculate totals using aggregation for better performance
     const totals = await Transaction.aggregate([
       { $match: filterQuery },
       {
         $group: {
-          _id: null,
-          totalIncome: {
-            $sum: {
-              $cond: [{ $eq: ["$type", "income"] }, "$amount", 0],
-            },
-          },
-          totalExpense: {
-            $sum: {
-              $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0],
-            },
-          },
-        },
-      },
+          _id: "$type",
+          total: { $sum: "$amount" }
+        }
+      }
     ]);
 
-    const totalsData = totals[0] || { totalIncome: 0, totalExpense: 0 };
+    // Process totals into a more usable format
+    const totalIncome = totals.find(t => t._id === "income")?.total || 0;
+    const totalExpense = totals.find(t => t._id === "expense")?.total || 0;
 
     return NextResponse.json({
-      transactions,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalTransactions,
-        hasMore: page < totalPages,
-        limit,
-      },
+      transactions: JSON.parse(JSON.stringify(transactions)),
       totals: {
-        totalIncome: totalsData.totalIncome || 0,
-        totalExpense: totalsData.totalExpense || 0,
-      },
+        totalIncome,
+        totalExpense
+      }
+    }, {
+      headers: {
+        // Add cache control headers
+        'Cache-Control': 'private, max-age=300' // Cache for 5 minutes
+      }
     });
   } catch (error) {
     console.error("Error in monthly transactions:", error);
@@ -122,7 +82,7 @@ export async function GET(request: NextRequest, params: Params) {
         error: "Internal server error",
         details:
           process.env.NODE_ENV === "development"
-            ? (error as Error).message
+            ? (error instanceof Error ? error.message : String(error))
             : undefined,
       },
       { status: 500 }

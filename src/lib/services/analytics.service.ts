@@ -1,92 +1,120 @@
 // services/analyticsService.ts
-import { ITransaction } from "@/models/transaction.model";
+import { Transaction } from "@/types/transaction";
 
-export const fetchMonthlyAnalytics = async (year: number, month: number) => {
+interface ApiResponse {
+  transactions: Transaction[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalTransactions: number;
+    hasMore: boolean;
+    limit: number;
+  };
+  totals: {
+    totalIncome: number;
+    totalExpense: number;
+  };
+}
+
+export interface AnalyticsData {
+  expense: number;
+  income: number;
+  total: number;
+  expanseCategories: CategoryData[];
+  incomeCategories: CategoryData[];
+  dailyFlow: DailyFlowData[];
+}
+
+interface CategoryData {
+  name: string;
+  value: number;
+  percentage: number;
+}
+
+interface DailyFlowData {
+  date: string;
+  amount: number;
+}
+
+export const fetchMonthlyAnalytics = async (year: number, month: number): Promise<AnalyticsData> => {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions/monthly/${year}/${month}`);
+    
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || "Failed to fetch data");
+      throw new Error(error.error || "Failed to fetch analytics data");
     }
 
-    const transactions: ITransaction[] = await response.json();
+    const data: ApiResponse = await response.json();
+    const transactions = data.transactions;
+
+    // Extract income and expense totals from API response
+    const expenseTotal = data.totals.totalExpense;
+    const incomeTotal = data.totals.totalIncome;
 
     // Process expense transactions
-    const expenseTransactions = transactions.filter(
-      (t) => t.type === "expense"
-    );
-    const incomeTransactions = transactions.filter((t) => t.type === "income");
+    const expenseTransactions = transactions.filter(t => t.type === "expense");
+    const incomeTransactions = transactions.filter(t => t.type === "income");
 
-    const expenseTotal = expenseTransactions.reduce(
-      (sum, t) => sum + t.amount,
-      0
-    );
-    const incomeTotal = incomeTransactions.reduce(
-      (sum, t) => sum + t.amount,
-      0
-    );
-
-    const incomeCategoryTotals = incomeTransactions.reduce((acc, t) => {
-      const existing = acc.find((c) => c.name === t.category);
-      if (existing) {
-        existing.value += t.amount;
-      } else {
-        acc.push({ name: t.category, value: t.amount, percentage: 0 });
-      }
-      return acc;
-    }, [] as { name: string; value: number; percentage: number }[]);
-
-    // Calculate percentages
-    incomeCategoryTotals.forEach((cat) => {
-      cat.percentage = incomeTotal ? (cat.value / incomeTotal) * 100 : 0;
+    // Calculate expense categories
+    const expenseCategoryMap = new Map<string, number>();
+    expenseTransactions.forEach(t => {
+      const currentAmount = expenseCategoryMap.get(t.category) || 0;
+      expenseCategoryMap.set(t.category, currentAmount + Math.abs(t.amount));
     });
 
-    // Sort by value descending
-    incomeCategoryTotals.sort((a, b) => b.value - a.value);
+    const expanseCategories: CategoryData[] = Array.from(expenseCategoryMap.entries())
+      .map(([name, value]) => ({
+        name,
+        value,
+        percentage: expenseTotal ? (value / expenseTotal) * 100 : 0
+      }))
+      .sort((a, b) => b.value - a.value);
 
-    // Calculate category totals
-    const categoryTotals = expenseTransactions.reduce((acc, t) => {
-      const existing = acc.find((c) => c.name === t.category);
-      if (existing) {
-        existing.value += t.amount;
-      } else {
-        acc.push({ name: t.category, value: t.amount, percentage: 0 });
-      }
-      return acc;
-    }, [] as { name: string; value: number; percentage: number }[]);
-
-    // Calculate percentages
-    categoryTotals.forEach((cat) => {
-      cat.percentage = expenseTotal ? (cat.value / expenseTotal) * 100 : 0;
+    // Calculate income categories
+    const incomeCategoryMap = new Map<string, number>();
+    incomeTransactions.forEach(t => {
+      const currentAmount = incomeCategoryMap.get(t.category) || 0;
+      incomeCategoryMap.set(t.category, currentAmount + t.amount);
     });
 
-    // Sort by value descending
-    categoryTotals.sort((a, b) => b.value - a.value);
+    const incomeCategories: CategoryData[] = Array.from(incomeCategoryMap.entries())
+      .map(([name, value]) => ({
+        name,
+        value,
+        percentage: incomeTotal ? (value / incomeTotal) * 100 : 0
+      }))
+      .sort((a, b) => b.value - a.value);
 
-    // Create daily flow data
-    const dailyFlow = transactions.reduce((acc, t) => {
-      const date = new Date(t.date).getDate().toString();
-      const existing = acc.find((d) => d.date === date);
-      const amount = t.type === "expense" ? -t.amount : t.amount;
-
-      if (existing) {
-        existing.amount += amount;
-      } else {
-        acc.push({ date, amount });
-      }
-      return acc;
-    }, [] as { date: string; amount: number }[]);
-
-    // Sort by date
-    dailyFlow.sort((a, b) => parseInt(a.date) - parseInt(b.date));
+    // Create daily flow data with better date formatting
+    const dailyFlowMap = new Map<string, number>();
+    
+    transactions.forEach(t => {
+      const date = new Date(t.date);
+      const day = date.getUTCDate().toString();
+      const amount = t.type === "expense" ? -Math.abs(t.amount) : t.amount;
+      
+      const currentAmount = dailyFlowMap.get(day) || 0;
+      dailyFlowMap.set(day, currentAmount + amount);
+    });
+    
+    // Create a full array of days in the month (1-31 or appropriate)
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const dailyFlow: DailyFlowData[] = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = (i + 1).toString();
+      return {
+        date: day,
+        amount: dailyFlowMap.get(day) || 0
+      };
+    });
 
     return {
       expense: expenseTotal,
       income: incomeTotal,
       total: incomeTotal - expenseTotal,
-      expanseCategories: categoryTotals,
-      dailyFlow,
-      incomeCategories  : incomeCategoryTotals
+      expanseCategories,
+      incomeCategories,
+      dailyFlow
     };
   } catch (error) {
     console.error("Analytics fetch error:", error);

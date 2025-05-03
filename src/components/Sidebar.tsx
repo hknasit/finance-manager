@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -29,7 +30,7 @@ export default function Sidebar() {
     { name: "Home", href: "/dashboard", icon: Home },
     { name: "Year", href: "/year", icon: Calendar },
     { name: "Categories", href: "/category", icon: Tag },
-    { name: "Analytics", href: "/analytics", icon: ChartLine },
+    // { name: "Analytics", href: "/analytics", icon: ChartLine },
     { name: "Report", href: "/report", icon: FileChartColumn },
   ];
 
