@@ -24,7 +24,6 @@ import {
 import { DashboardHeader } from "./DashboardHeader";
 import TransactionInput from "@/components/TransactionInput2";
 import { TransactionDetails } from "./TransactionDetails";
-
 import ResponsiveFilter from "./ResponsiveFilter";
 
 export default function Dashboard() {
