@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState , useEffect} from "react";
+import React, { useState } from "react";
 import {
   ArrowUpDown,
   Calendar,
@@ -10,7 +10,6 @@ import {
   PencilIcon,
   Trash2,
   ImageIcon,
-  Check,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/contexts/TransactionContext";
@@ -25,7 +24,8 @@ import {
 import { DashboardHeader } from "./DashboardHeader";
 import TransactionInput from "@/components/TransactionInput2";
 import { TransactionDetails } from "./TransactionDetails";
-import MobileFilter from "./MobileFilter";
+
+import ResponsiveFilter from "./ResponsiveFilter";
 
 export default function Dashboard() {
   const { isAuthenticated } = useAuth();
@@ -38,7 +38,7 @@ export default function Dashboard() {
     deleteTransaction,
     applyFilters,
     clearFilters,
-    fetchTransactions,
+    // fetchTransactions,
   } = useTransactions();
 
   // Local UI states
@@ -49,12 +49,6 @@ export default function Dashboard() {
   const [sorting, setSorting] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchTransactions();
-    }
-  }, [isAuthenticated]);
 
   const columnHelper = createColumnHelper<Transaction>();
 
@@ -67,11 +61,19 @@ export default function Dashboard() {
           <span>Date</span>
         </div>
       ),
-      cell: (info) => (
-        <div className="text-sm text-slate-600">
-          {new Date(info.getValue()).toLocaleDateString()}
-        </div>
-      ),
+      cell: (info) => {
+        const date = new Date(info.getValue());
+        const year = date.getUTCFullYear();
+        const month = date.getUTCMonth() + 1; // getUTCMonth() returns 0-11
+        const day = date.getUTCDate();
+        
+        return (
+          <div className="text-sm text-slate-600">
+            {`${day}/${month}/${year}`}
+          </div>
+        );
+        
+        },
     }),
     columnHelper.accessor("description", {
       header: "Description",
@@ -218,6 +220,80 @@ export default function Dashboard() {
     }
   };
 
+    // The filter control components to be passed to ResponsiveFilter
+    const filterControls = (
+      <>
+        <div>
+          <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+            Type
+          </label>
+          <select
+            value={filters.type}
+            onChange={(e) =>
+              setFilters({ ...filters, type: e.target.value })
+            }
+            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:border-green-500"
+            disabled={isProcessing}
+          >
+            <option value="all">All Types</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+          </select>
+        </div>
+  
+        <div>
+          <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+            Payment Method
+          </label>
+          <select
+            value={filters.paymentMethod}
+            onChange={(e) =>
+              setFilters({
+                ...filters,
+                paymentMethod: e.target.value,
+              })
+            }
+            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:border-green-500"
+            disabled={isProcessing}
+          >
+            <option value="all">All Methods</option>
+            <option value="card">Card</option>
+            <option value="cash">Cash</option>
+          </select>
+        </div>
+  
+        <div>
+          <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+            From
+          </label>
+          <input
+            type="date"
+            value={filters.startDate}
+            onChange={(e) =>
+              setFilters({ ...filters, startDate: e.target.value })
+            }
+            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:border-green-500"
+            disabled={isProcessing}
+          />
+        </div>
+  
+        <div>
+          <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+            To
+          </label>
+          <input
+            type="date"
+            value={filters.endDate}
+            onChange={(e) =>
+              setFilters({ ...filters, endDate: e.target.value })
+            }
+            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:border-green-500"
+            disabled={isProcessing}
+          />
+        </div>
+      </>
+    );
+
   if (!isAuthenticated) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-slate-50 p-4">
@@ -233,7 +309,16 @@ export default function Dashboard() {
       <DashboardHeader onAddTransaction={() => setShowTransactionForm(true)} />
       <div className="bg-white p-4 rounded-lg shadow">
         {/* Filter Panel */}
-        <MobileFilter>
+               {/* New Responsive Filter Component */}
+               <ResponsiveFilter 
+          onApply={applyFilters}
+          onClear={clearFilters}
+          isProcessing={isProcessing}
+          isLoading={loading}
+        >
+          {filterControls}
+        </ResponsiveFilter>
+        {/* <MobileFilter>
           <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 mb-6 max-w-min">
             <div className="flex flex-col items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
@@ -331,7 +416,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        </MobileFilter>
+        </MobileFilter> */}
 
         {/* Loading Indicator */}
         {loading ? (
@@ -429,7 +514,7 @@ export default function Dashboard() {
               setIsProcessing(true);
               setShowDetails(false);
               await deleteTransaction(transactionId);
-              await fetchTransactions(true);
+              // await fetchTransactions(true);
             } catch (error) {
               console.error("Failed to delete transaction:", error);
               alert("Failed to delete transaction. Please try again.");

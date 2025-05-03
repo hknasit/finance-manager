@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { CldUploadWidget } from 'next-cloudinary';
-import { Upload, X, Camera } from 'lucide-react';
-import { CldImage } from 'next-cloudinary';
-import { CloudinaryUploadResult, CloudinaryAsset } from '@/types/cloudinary';
+import { useState, useRef } from "react";
+import { CldUploadWidget } from "next-cloudinary";
+import { Upload, X, Camera } from "lucide-react";
+import { CldImage } from "next-cloudinary";
+import { CloudinaryUploadResult, CloudinaryAsset } from "@/types/cloudinary";
 
 interface ReceiptUploadProps {
   onChange: (asset: CloudinaryAsset | null) => void;
@@ -13,7 +13,11 @@ interface ReceiptUploadProps {
   disabled?: boolean;
 }
 
-export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps) {
+export function ReceiptUpload({
+  onChange,
+  value,
+  disabled,
+}: ReceiptUploadProps) {
   const [error, setError] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -23,14 +27,14 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
   // Create a CloudinaryAsset from upload result
   const processUploadResult = (result: any) => {
     setError(null);
-    
+
     // Create a thumbnail URL using Cloudinary transformations
     const thumbnailUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,w_100,h_100/${result.public_id}`;
-    
+
     onChange({
       publicId: result.public_id,
       url: result.secure_url,
-      thumbnailUrl
+      thumbnailUrl,
     });
   };
 
@@ -39,8 +43,8 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
   };
 
   const handleUploadError = (error: string) => {
-    console.error('Upload error:', error);
-    setError('Failed to upload image. Please try again.');
+    console.error("Upload error:", error);
+    setError("Failed to upload image. Please try again.");
   };
 
   const handleRemove = () => {
@@ -50,47 +54,51 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
   const startCamera = async () => {
     setIsCapturing(true);
     setError(null);
-    
+
     try {
       console.log("Checking camera support...");
       // First check if the browser supports getUserMedia
       if (!navigator.mediaDevices) {
         console.error("mediaDevices not available");
-        throw new Error('Your browser does not support camera access (mediaDevices API missing)');
+        throw new Error(
+          "Your browser does not support camera access (mediaDevices API missing)"
+        );
       }
-      
+
       if (!navigator.mediaDevices.getUserMedia) {
         console.error("getUserMedia not available");
-        throw new Error('Your browser does not support camera access (getUserMedia missing)');
+        throw new Error(
+          "Your browser does not support camera access (getUserMedia missing)"
+        );
       }
-      
+
       console.log("Requesting camera access...");
       // Log the origin to verify if it's secure
       console.log("Current origin:", window.location.origin);
       console.log("Is secure context:", window.isSecureContext);
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
-      
-      console.log("Camera access granted!", stream.getVideoTracks());
-      // Front camera
 
-      
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+
+      console.log("Camera access granted!", stream.getVideoTracks());
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (err) {
-      console.error('Detailed camera error:', err);
+      console.error("Detailed camera error:", err);
       // Log every property of the error object
       if (err instanceof Error) {
         console.log("Error name:", err.name);
         console.log("Error message:", err.message);
         console.log("Error stack:", err.stack);
       }
-      
+
       // More specific error handling...
-      setError('Failed to access camera. Please check permissions and browser console for details.');
+      setError(
+        "Failed to access camera. Please check permissions and browser console for details."
+      );
       setIsCapturing(false);
     }
   };
@@ -98,7 +106,7 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
   const stopCamera = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
+      tracks.forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
     setIsCapturing(false);
@@ -108,28 +116,34 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
+
       // Set canvas dimensions to match video
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
+
       // Draw video frame to canvas
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         // Convert canvas to blob
-        canvas.toBlob(async (blob) => {
-          if (blob) {
-            // Create a File object from the blob
-            const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
-            
-            // Upload to Cloudinary directly
-            uploadToCloudinary(file);
-          }
-        }, 'image/jpeg', 0.9);
+        canvas.toBlob(
+          async (blob) => {
+            if (blob) {
+              // Create a File object from the blob
+              const file = new File([blob], "camera-capture.jpg", {
+                type: "image/jpeg",
+              });
+
+              // Upload to Cloudinary directly
+              uploadToCloudinary(file);
+            }
+          },
+          "image/jpeg",
+          0.9
+        );
       }
-      
+
       // Stop camera after capturing
       stopCamera();
     }
@@ -137,49 +151,53 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
 
   const uploadToCloudinary = async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
-    formData.append('folder', 'finance-app/receipts');
-    
+    formData.append("file", file);
+    formData.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ""
+    );
+    formData.append("folder", "finance-app/receipts");
+
     try {
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
         {
-          method: 'POST',
-          body: formData
+          method: "POST",
+          body: formData,
         }
       );
-      
+
       const result = await response.json();
-      
+
       if (result.error) {
         throw new Error(result.error.message);
       }
-      
+
       // Process the upload result instead of trying to cast it to CloudinaryUploadResult
       processUploadResult(result);
     } catch (error) {
-      handleUploadError('Failed to upload image: ' + (error as Error).message);
+      handleUploadError("Failed to upload image: " + (error as Error).message);
     }
   };
 
   const handleDirectFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      
+
       // Validate file size
-      if (file.size > 5000000) { // 5MB
-        setError('File size exceeds 5MB limit');
+      if (file.size > 5000000) {
+        // 5MB
+        setError("File size exceeds 5MB limit");
         return;
       }
-      
+
       // Validate file type
-      const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      const validTypes = ["image/png", "image/jpeg", "image/jpg"];
       if (!validTypes.includes(file.type)) {
-        setError('Only PNG and JPEG images are allowed');
+        setError("Only PNG and JPEG images are allowed");
         return;
       }
-      
+
       uploadToCloudinary(file);
     }
   };
@@ -189,18 +207,14 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
       <label className="block text-sm font-medium text-slate-700">
         Receipt Image
       </label>
-      
-      {error && (
-        <div className="text-sm text-red-600">
-          {error}
-        </div>
-      )}
+
+      {error && <div className="text-sm text-red-600">{error}</div>}
 
       {isCapturing ? (
         <div className="space-y-4">
-          <video 
-            ref={videoRef} 
-            autoPlay 
+          <video
+            ref={videoRef}
+            autoPlay
             playsInline
             className="w-full h-64 bg-slate-100 rounded-xl object-cover"
           />
@@ -233,11 +247,9 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
               className="flex-1 flex items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Camera className="w-5 h-5 text-slate-400" />
-              <span className="text-sm text-slate-600">
-                Use Camera
-              </span>
+              <span className="text-sm text-slate-600">Use Camera</span>
             </button>
-            
+
             <input
               type="file"
               ref={fileInputRef}
@@ -245,7 +257,7 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
               onChange={handleDirectFileUpload}
               className="hidden"
             />
-            
+
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -253,16 +265,16 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
               className="flex-1 flex items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Upload className="w-5 h-5 text-slate-400" />
-              <span className="text-sm text-slate-600">
-                Select File
-              </span>
+              <span className="text-sm text-slate-600">Select File</span>
             </button>
           </div>
-          
+
           <CldUploadWidget
+
             uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
             options={{
               maxFiles: 1,
+              sources: ["local", "camera"],
               resourceType: "image",
               folder: "finance-app/receipts",
               clientAllowedFormats: ["png", "jpeg", "jpg"],
@@ -282,9 +294,9 @@ export function ReceiptUpload({ onChange, value, disabled }: ReceiptUploadProps)
                   error: "#F44235",
                   inProgress: "#0078FF",
                   complete: "#20B832",
-                  sourceBg: "#E4EBF1"
-                }
-              }
+                  sourceBg: "#E4EBF1",
+                },
+              },
             }}
             onSuccess={(result: any) => handleUploadSuccess(result.info)}
             onError={handleUploadError}

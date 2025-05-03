@@ -1,13 +1,14 @@
 // contexts/TransactionContext.tsx
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import {
   Transaction,
   FilterState,
   TransactionTotals,
 } from "@/types/transaction";
 import { useUserPreferences } from "./UserPreferencesContext";
+import { useAuth } from "./AuthContext";
 
 interface PaginationData {
   currentPage: number;
@@ -28,17 +29,12 @@ interface TransactionContextType {
   // Actions
   setFilters: (filters: FilterState) => void;
   fetchTransactions: (reset?: boolean) => Promise<void>;
-  createTransaction: (
-    transactionData: Partial<Transaction>
-  ) => Promise<Transaction>;
-  updateTransaction: (
-    id: string,
-    transactionData: Partial<Transaction>
-  ) => void;
+  createTransaction: (transactionData: Partial<Transaction>) => Promise<Transaction>;
+  updateTransaction: (id: string, transactionData: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   loadMoreTransactions: () => Promise<void>;
   applyFilters: () => Promise<void>;
-  clearFilters: () => void;
+  clearFilters: () => Promise<void>;
 }
 
 const defaultPagination: PaginationData = {
@@ -57,9 +53,7 @@ const defaultFilters: FilterState = {
   endDate: "",
 };
 
-const TransactionContext = createContext<TransactionContextType | undefined>(
-  undefined
-);
+const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
 export function TransactionProvider({
   children,
@@ -70,39 +64,41 @@ export function TransactionProvider({
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] =
-    useState<PaginationData>(defaultPagination);
+  const [pagination, setPagination] = useState<PaginationData>(defaultPagination);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [totals, setTotals] = useState<TransactionTotals>({
     income: 0,
     expense: 0,
   });
+  
   const { setPreferences } = useUserPreferences();
+  const { isAuthenticated } = useAuth();
 
-  // Fetch transactions with filters and pagination
-  const fetchTransactions = async (reset: boolean = false) => {
+  // Build API URL with query parameters
+  const buildApiUrl = useCallback((currentFilters: FilterState, page: number, limit: number): string => {
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(currentFilters.type !== "all" && { type: currentFilters.type }),
+      ...(currentFilters.category !== "all" && { category: currentFilters.category }),
+      ...(currentFilters.paymentMethod !== "all" && { paymentMethod: currentFilters.paymentMethod }),
+      ...(currentFilters.startDate && { startDate: currentFilters.startDate }),
+      ...(currentFilters.endDate && { endDate: currentFilters.endDate }),
+    });
+
+    return `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions?${queryParams}`;
+  }, []);
+
+  // Fetch transactions with filters and pagination - memoized with useCallback
+  const fetchTransactions = useCallback(async (reset: boolean = false): Promise<void> => {
     try {
       setLoading(true);
       const currentPage = reset ? 1 : pagination.currentPage;
+      
+      const apiUrl = buildApiUrl(filters, currentPage, pagination.limit);
+      console.log("Fetching with URL:", apiUrl);
 
-      // Build query parameters
-      const queryParams = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: pagination.limit.toString(),
-        ...(filters.type !== "all" && { type: filters.type }),
-        ...(filters.category !== "all" && { category: filters.category }),
-        ...(filters.paymentMethod !== "all" && {
-          paymentMethod: filters.paymentMethod,
-        }),
-        ...(filters.startDate && { startDate: filters.startDate }),
-        ...(filters.endDate && { endDate: filters.endDate }),
-      });
-
-      console.log("Fetching with params:", queryParams.toString());
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/transactions?${queryParams}`
-      );
+      const response = await fetch(apiUrl);
 
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");
@@ -114,7 +110,7 @@ export function TransactionProvider({
       if (reset) {
         setTransactions(data.transactions);
       } else {
-        setTransactions((prev) => [...prev, ...data.transactions]);
+        setTransactions(prev => [...prev, ...data.transactions]);
       }
 
       // Update pagination and totals
@@ -124,9 +120,7 @@ export function TransactionProvider({
       return data;
     } catch (err) {
       console.error("Error fetching transactions:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch transactions"
-      );
+      setError(err instanceof Error ? err.message : "Failed to fetch transactions");
       if (reset) {
         setTransactions([]);
       }
@@ -134,30 +128,58 @@ export function TransactionProvider({
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, pagination.currentPage, pagination.limit, buildApiUrl]);
 
-  // Load more transactions (pagination)
-  const loadMoreTransactions = async () => {
+  // Load more transactions (pagination) - memoized
+  const loadMoreTransactions = useCallback(async (): Promise<void> => {
     if (!pagination.hasMore || loading) return;
-    setPagination((prev) => ({
+    
+    setPagination(prev => ({
       ...prev,
       currentPage: prev.currentPage + 1,
     }));
+    
     await fetchTransactions(false);
-  };
+  }, [pagination.hasMore, loading, fetchTransactions]);
 
-  // Apply current filters
-  const applyFilters = async () => {
+  // Apply current filters - memoized
+  const applyFilters = useCallback(async (): Promise<void> => {
     await fetchTransactions(true);
-  };
+  }, [fetchTransactions]);
 
-  // Clear all filters
-  const clearFilters = () => {
+  // Clear all filters - memoized
+  const clearFilters = useCallback(async (): Promise<void> => {
+    // Set the filters state
     setFilters(defaultFilters);
-  };
+    
+    // Directly build query without relying on filter state
+    const apiUrl = buildApiUrl(defaultFilters, 1, pagination.limit);
+    
+    try {
+      setLoading(true);
+      
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch transactions");
+      }
+      
+      const data = await response.json();
+      setTransactions(data.transactions);
+      setPagination(data.pagination);
+      setTotals(data.totals);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching transactions:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch transactions");
+      setTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.limit, buildApiUrl]);
 
-  // Create new transaction
-  const createTransaction = async (transactionData: Partial<Transaction>) => {
+  // Create new transaction - memoized
+  const createTransaction = useCallback(async (transactionData: Partial<Transaction>): Promise<Transaction> => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -172,23 +194,26 @@ export function TransactionProvider({
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create transaction");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create transaction");
       }
 
       const data = await response.json();
-      setPreferences((prev) => ({
+      
+      // Update preferences
+      setPreferences(prev => ({
         ...prev,
         bankBalance: data.balances.bankBalance,
         cashBalance: data.balances.cashBalance,
       }));
-      // Reorder transactions based on date
-
-      setTransactions((prev) =>
+      
+      // Update transactions - sort by date
+      setTransactions(prev => 
         [...prev, data.transaction].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
       );
+      
       return data.transaction;
     } catch (error) {
       console.error("Error creating transaction:", error);
@@ -196,13 +221,13 @@ export function TransactionProvider({
     } finally {
       setLoading(false);
     }
-  };
+  }, [setPreferences]);
 
-  // Update transaction
-  const updateTransaction = async (
+  // Update transaction - memoized
+  const updateTransaction = useCallback(async (
     id: string,
     transactionData: Partial<Transaction>
-  ) => {
+  ): Promise<void> => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -217,22 +242,16 @@ export function TransactionProvider({
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update transaction");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update transaction");
       }
 
-      const updatedTransaction = await response
-        .json()
-        .then((data) => data.transaction);
+      const { transaction: updatedTransaction } = await response.json();
 
-      setTransactions((prev) =>
+      // Update transactions - sort by date
+      setTransactions(prev =>
         prev
-          .map((t) => {
-            if (t._id === id) {
-              return updatedTransaction;
-            }
-            return t;
-          })
+          .map(t => t._id === id ? updatedTransaction : t)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       );
     } catch (error) {
@@ -241,10 +260,10 @@ export function TransactionProvider({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Delete transaction
-  const deleteTransaction = async (id: string) => {
+  // Delete transaction - memoized
+  const deleteTransaction = useCallback(async (id: string): Promise<void> => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -253,24 +272,34 @@ export function TransactionProvider({
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to delete transaction");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete transaction");
       }
 
-      if (response.ok) {
-        setTransactions((prev) =>
-          prev.filter((transaction) => transaction._id !== id)
-        );
-      }
+      // Remove deleted transaction from state
+      setTransactions(prev => prev.filter(transaction => transaction._id !== id));
     } catch (error) {
       console.error("Error deleting transaction:", error);
       throw error;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const value = {
+  // Initial data fetch when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    fetchTransactions(true).catch(err => {
+      console.error("Failed to fetch initial transactions:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch transactions");
+    });
+  }, [isAuthenticated, fetchTransactions]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
     transactions,
     loading,
     error,
@@ -285,10 +314,25 @@ export function TransactionProvider({
     loadMoreTransactions,
     applyFilters,
     clearFilters,
-  };
+  }), [
+    transactions,
+    loading, 
+    error,
+    filters,
+    totals,
+    pagination,
+    setFilters,
+    fetchTransactions,
+    createTransaction,
+    updateTransaction,
+    deleteTransaction,
+    loadMoreTransactions,
+    applyFilters,
+    clearFilters
+  ]);
 
   return (
-    <TransactionContext.Provider value={value}>
+    <TransactionContext.Provider value={contextValue}>
       {children}
     </TransactionContext.Provider>
   );
@@ -297,9 +341,7 @@ export function TransactionProvider({
 export function useTransactions() {
   const context = useContext(TransactionContext);
   if (context === undefined) {
-    throw new Error(
-      "useTransactions must be used within a TransactionProvider"
-    );
+    throw new Error("useTransactions must be used within a TransactionProvider");
   }
   return context;
 }

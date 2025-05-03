@@ -20,9 +20,9 @@ export interface Transaction {
 
   
   export interface FilterState {
-    type: "all" | "income" | "expense";
+    type: "all" | "income" | "expense" | string;
     category: string;
-    paymentMethod: "all" | "card" | "cash";
+    paymentMethod: "all" | "card" | "cash" | string;
     startDate: string;
     endDate: string;
   }
