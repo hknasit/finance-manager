@@ -11,24 +11,16 @@ import {
   Check,
   ChevronDown,
   Search,
-  ImageIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCategories } from "@/contexts/CategoryContext";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-// import { datePickerTheme } from "@/lib/themes/datepicker";
-import { CldUploadWidget } from "next-cloudinary";
 import dayjs from "dayjs";
-import type {
-  CloudinaryUploadResult,
-  CloudinaryAsset,
-} from "@/types/cloudinary";
+import type { CloudinaryAsset } from "@/types/cloudinary";
 import type { Transaction } from "@/types/transaction";
-import { cloudinaryConfig } from "@/lib/config/cloudinary";
 import { useTransactions } from "@/contexts/TransactionContext";
+import { ReceiptUpload } from "./ReceiptUpload";
+import DatePicker from "./DatePicker";
 
 interface TransactionInputProps {
   mode: "create" | "edit";
@@ -76,6 +68,18 @@ export default function TransactionInput({
   const [showCategories, setShowCategories] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    // Save original body style
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    // Prevent scrolling on mount
+    document.body.style.overflow = 'hidden';
+    // Re-enable scrolling on unmount
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -96,19 +100,9 @@ export default function TransactionInput({
       setFormData((prev) => ({ ...prev, category: categoryList[0].name }));
     }
   }, [categories, formData.type, formData.category]);
-  const handleUploadSuccess = (result: CloudinaryUploadResult) => {
-    const formattedAsset = {
-      publicId: result.public_id,
-      url: result.secure_url,
-      //@ts-ignore
-      thumbnailUrl: result?.thumbnail_url || result.secure_url,
-    };
-    setFormData((prev) => ({ ...prev, image: formattedAsset }));
-  };
 
-  const handleUploadError = (error: unknown) => {
-    console.error("Upload error:", error);
-    setError("Failed to upload image. Please try again.");
+  const handleDateChange = (date: Date) => {
+    setFormData((prev) => ({ ...prev, date }));
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,7 +160,7 @@ export default function TransactionInput({
           <button
             onClick={onClose}
             disabled={loading}
-            className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-100 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105"
+            className="text-red-600 hover:text-red-700 font-medium flex items-center gap-1.5 px-3 py-1.5 hover:bg-red-50 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105"
           >
             <X size={18} />
             <span className="text-sm">Close</span>
@@ -190,29 +184,35 @@ export default function TransactionInput({
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 space-y-3.5">
-            {/* Transaction Type */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
-              {["income", "expense"].map((t) => (
-                <button
-                  key={t}
-                  className={`py-2.5 px-3 rounded-lg transition-all text-sm font-medium ${
-                    formData.type === t
-                      ? "bg-white shadow-sm text-green-600"
-                      : "text-slate-600 hover:bg-slate-50"
-                  }`}
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      type: t as "income" | "expense",
-                      category: "", // Reset category when type changes
-                    }))
-                  }
-                  disabled={loading}
-                >
-                  {t.toUpperCase()}
-                </button>
-              ))}
+            {/* Transaction Type - Styled like payment method */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Transaction Type
+              </label>
+              <div className="flex gap-2">
+                {["income", "expense"].map((t) => (
+                  <button
+                    key={t}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 border rounded-xl transition-colors ${
+                      formData.type === t
+                        ? "bg-green-50 border-green-600 text-green-700 font-medium"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        type: t as "income" | "expense",
+                        category: "", // Reset category when type changes
+                      }))
+                    }
+                    disabled={loading}
+                  >
+                    <span className="text-sm">{t.toUpperCase()}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+            
             {/* Payment Method */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -329,82 +329,20 @@ export default function TransactionInput({
             </div>
 
             {/* Image Upload */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Receipt Image
-              </label>
-              {!formData.image ? (
-                <CldUploadWidget
-                  uploadPreset={cloudinaryConfig.uploadPreset}
-                  onSuccess={(result: any) => handleUploadSuccess(result.info)}
-                  onError={handleUploadError}
-                  //@ts-ignore
-                  options={cloudinaryConfig.uploadOptions}
-                >
-                  {({ open }) => (
-                    <button
-                      type="button"
-                      onClick={() => open?.()}
-                      disabled={loading}
-                      className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-slate-300 transition-colors disabled:opacity-50"
-                    >
-                      <ImageIcon className="w-5 h-5 text-slate-400" />
-                      <span className="text-sm text-slate-600">
-                        Upload receipt image
-                      </span>
-                    </button>
-                  )}
-                </CldUploadWidget>
-              ) : (
-                <div className="relative rounded-xl overflow-hidden">
-                  <img
-                    src={formData.image.url}
-                    alt="Receipt"
-                    className="w-full h-32 object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, image: null }))
-                    }
-                    disabled={loading}
-                    className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-sm hover:bg-slate-50"
-                  >
-                    <X className="w-4 h-4 text-slate-600" />
-                  </button>
-                </div>
-              )}
-            </div>
+            <ReceiptUpload
+              onChange={(asset) =>
+                setFormData((prev) => ({ ...prev, image: asset }))
+              }
+              value={formData.image}
+              disabled={loading}
+            />
 
-            {/* Date */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Date
-              </label>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker
-                  value={dayjs(formData.date)}
-                  onChange={(newValue) => {
-                    if (newValue) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        date: newValue.toDate(),
-                      }));
-                    }
-                  }}
-                  format="MMMM D, YYYY"
-                  slotProps={{
-                    textField: { fullWidth: true },
-                    field: { className: "text-slate-900" },
-                    popper: {
-                      modifiers: [
-                        { name: "offset", options: { offset: [0, 8] } },
-                      ],
-                    },
-                  }}
-                />
-              </LocalizationProvider>
-            </div>
+            {/* Date Picker */}
+            <DatePicker
+              selectedDate={formData.date}
+              onChange={handleDateChange}
+              disabled={loading}
+            />
 
             {/* Amount */}
             <div>
