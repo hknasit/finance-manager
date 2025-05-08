@@ -58,7 +58,18 @@ export default function TransactionTable({
   }, []);
 
   const columnHelper = createColumnHelper<Transaction>();
+// Constants
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+function formatDate(date: Date): string {
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = MONTH_NAMES[date.getUTCMonth()];
+  const year = date.getUTCFullYear();
 
+  return `${day} ${month} ${year}`;
+}
   const columns = [
     columnHelper.accessor("date", {
       header: () => (
@@ -69,13 +80,11 @@ export default function TransactionTable({
       ),
       cell: (info) => {
         const date = new Date(info.getValue());
-        const year = date.getUTCFullYear();
-        const month = date.getUTCMonth() + 1; // getUTCMonth() returns 0-11
-        const day = date.getUTCDate();
+       
         
         return (
           <div className="text-sm text-slate-600">
-            {`${day}/${month}/${year}`}
+            {formatDate(date)}
           </div>
         );
       },
@@ -257,7 +266,9 @@ export default function TransactionTable({
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3 text-slate-400" />
                   <span className="text-xs text-slate-600">
-                    {new Date(transaction.date).toLocaleDateString()}
+                    {
+                      formatDate(new Date(transaction.date))
+                    }
                   </span>
                 </div>
                 <div className="flex items-center gap-1">

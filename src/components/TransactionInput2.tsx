@@ -73,7 +73,7 @@ export default function TransactionInput({
     // Save original body style
     const originalStyle = window.getComputedStyle(document.body).overflow;
     // Prevent scrolling on mount
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     // Re-enable scrolling on unmount
     return () => {
       document.body.style.overflow = originalStyle;
@@ -123,11 +123,23 @@ export default function TransactionInput({
       setLoading(true);
       setError("");
 
+      function fixDate(date) {
+        const localDate = new Date(date);
+       const year = localDate.getFullYear();
+       const month = localDate.getMonth();
+       const day = localDate.getDate();
+
+       const fixedDate = new Date(Date.UTC(year, month, day));
+       return fixedDate.toISOString()
+
+      }
+      console.log("Form date : "+ formData.date)
+
       if (mode === "edit") {
         const body = {
           ...formData,
           amount: parseFloat(formData.amount),
-          date: formData.date.toISOString(),
+          date: fixDate(formData.date) ,
           currentBankBalance: preferences.bankBalance,
           currentCashBalance: preferences.cashBalance,
         };
@@ -136,7 +148,7 @@ export default function TransactionInput({
         const body = {
           ...formData,
           amount: parseFloat(formData.amount),
-          date: formData.date.toISOString(),
+          date: fixDate(formData.date) ,
           currentBankBalance: preferences.bankBalance,
           currentCashBalance: preferences.cashBalance,
         };
@@ -212,7 +224,7 @@ export default function TransactionInput({
                 ))}
               </div>
             </div>
-            
+
             {/* Payment Method */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
