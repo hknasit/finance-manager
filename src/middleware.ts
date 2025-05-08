@@ -35,7 +35,6 @@ export function middleware(request) {
   // Remove trailing slash for consistent comparison
   const normalizedPath = pathname === "/"? pathname: pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
 
-  console.log(`Middleware: ${normalizedPath}`);
   
   // Skip middleware for static files and API routes
   if (

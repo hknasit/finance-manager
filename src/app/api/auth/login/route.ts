@@ -41,23 +41,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // const token = await createToken({
-    //   userId: user._id,
-    //   email: user.email,
-    //   name: user.name,
-    //   isVerified: user.isVerified
-    // });
+   
 
-    // await cookies().set('auth-token', token, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === 'production',
-    //   sameSite: 'lax',
-    //   path: '/',
-    //   maxAge: 60 * 60 * 24 // 24 hours
-    // });
-
-    // Create JWT token
-    console.log("Login route user:::"+ user);
     const token = jwt.sign(
       {
         id: user._id,

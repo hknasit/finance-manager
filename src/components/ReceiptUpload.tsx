@@ -46,7 +46,6 @@ export function ReceiptUpload({
   };
 
   const handleUploadSuccess = (result: any) => {
-    console.log("Upload success:", result);
     try {
       // Create a thumbnail URL using Cloudinary transformations
       const thumbnailUrl = `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/c_fill,w_100,h_100/${result.public_id}`;
@@ -56,8 +55,6 @@ export function ReceiptUpload({
         url: result.secure_url,
         thumbnailUrl: thumbnailUrl,
       };
-
-      console.log("Created asset:", asset);
       onChange(asset);
       setIsUploading(false);
     } catch (err) {
@@ -89,8 +86,6 @@ export function ReceiptUpload({
       formData.append('upload_preset', cloudinaryConfig.uploadPreset || '');
       formData.append('folder', 'finance-app/receipts');
       
-      console.log("Uploading to Cloudinary...");
-      
       // Upload to Cloudinary
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
@@ -105,9 +100,7 @@ export function ReceiptUpload({
         throw new Error(errorData.error?.message || 'Upload failed');
       }
       
-      const result = await response.json();
-      console.log("Upload successful:", result);
-      
+      const result = await response.json();  
       handleUploadSuccess(result);
     } catch (err) {
       console.error("Upload failed:", err);
@@ -119,7 +112,6 @@ export function ReceiptUpload({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      console.log(`Selected file: ${file.name}, type: ${file.type}, size: ${file.size}`);
       uploadToCloudinary(file);
     }
   };

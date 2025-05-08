@@ -133,7 +133,6 @@ export default function TransactionInput({
        return fixedDate.toISOString()
 
       }
-      console.log("Form date : "+ formData.date)
 
       if (mode === "edit") {
         const body = {

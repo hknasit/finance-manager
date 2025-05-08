@@ -96,7 +96,7 @@ export function TransactionProvider({
       const currentPage = reset ? 1 : pagination.currentPage;
       
       const apiUrl = buildApiUrl(filters, currentPage, pagination.limit);
-      console.log("Fetching with URL:", apiUrl);
+      
 
       const response = await fetch(apiUrl);
 

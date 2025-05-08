@@ -11,7 +11,6 @@ interface Params {
 export async function GET(request: Request, params: Params) {
   try {
     const { token } = await params.params;
-    console.log(token);
 
     if (!token) {
       return NextResponse.json(
