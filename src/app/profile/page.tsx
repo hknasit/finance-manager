@@ -112,7 +112,7 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  className="input-primary w-full"
+                  className="input-primary w-full text-gray-900"
                   placeholder="Your name"
                 />
               </div>
@@ -170,7 +170,7 @@ export default function ProfilePage() {
                     className={`px-4 py-3 border rounded-xl transition-all ${
                       formData.defaultTransactionType === "income"
                         ? "bg-green-50 border-green-600 text-green-600"
-                        : "hover:bg-gray-50"
+                        : "hover:bg-gray-50 text-gray-900"
                     }`}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -178,7 +178,7 @@ export default function ProfilePage() {
                         className={`w-5 h-5 ${
                           formData.defaultTransactionType === "income"
                             ? "text-green-600"
-                            : "text-gray-400"
+                            : "text-gray-700"
                         }`}
                       />
                       <span className="text-sm font-medium">Income</span>
@@ -196,7 +196,7 @@ export default function ProfilePage() {
                     className={`px-4 py-3 border rounded-xl transition-all ${
                       formData.defaultTransactionType === "expense"
                         ? "bg-green-50 border-green-600 text-green-600"
-                        : "hover:bg-gray-50"
+                        : "hover:bg-gray-50 text-gray-900"
                     }`}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -204,7 +204,7 @@ export default function ProfilePage() {
                         className={`w-5 h-5 ${
                           formData.defaultTransactionType === "expense"
                             ? "text-green-600"
-                            : "text-gray-400"
+                            : "text-gray-700"
                         }`}
                       />
                       <span className="text-sm font-medium">Expense</span>
@@ -230,7 +230,7 @@ export default function ProfilePage() {
                     className={`px-4 py-3 border rounded-xl transition-all ${
                       formData.defaultPaymentMethod === "card"
                         ? "bg-green-50 border-green-600 text-green-600"
-                        : "hover:bg-gray-50"
+                        : "hover:bg-gray-50 text-gray-900"
                     }`}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -238,7 +238,7 @@ export default function ProfilePage() {
                         className={`w-5 h-5 ${
                           formData.defaultPaymentMethod === "card"
                             ? "text-green-600"
-                            : "text-gray-400"
+                            : "text-gray-700"
                         }`}
                       />
                       <span className="text-sm font-medium">Card</span>
@@ -256,7 +256,7 @@ export default function ProfilePage() {
                     className={`px-4 py-3 border rounded-xl transition-all ${
                       formData.defaultPaymentMethod === "cash"
                         ? "bg-green-50 border-green-600 text-green-600"
-                        : "hover:bg-gray-50"
+                        : "hover:bg-gray-50 text-gray-900"
                     }`}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -264,7 +264,7 @@ export default function ProfilePage() {
                         className={`w-5 h-5 ${
                           formData.defaultPaymentMethod === "cash"
                             ? "text-green-600"
-                            : "text-gray-400"
+                            : "text-gray-700"
                         }`}
                       />
                       <span className="text-sm font-medium">Cash</span>

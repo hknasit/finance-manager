@@ -6,7 +6,6 @@ import {
   Calendar,
   CreditCard,
   Wallet,
-  DollarSign,
   PencilIcon,
   Trash2,
   ImageIcon,
@@ -20,6 +19,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useUserPreferences} from "@/contexts/UserPreferencesContext"
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -40,6 +40,8 @@ export default function TransactionTable({
 }: TransactionTableProps) {
   const [sorting, setSorting] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
+
+ const { formatAmount } = useUserPreferences();;
 
   // Check if we're on mobile on component mount
   React.useEffect(() => {
@@ -142,13 +144,7 @@ function formatDate(date: Date): string {
         const transaction = info.row.original;
         return (
           <div className="text-right flex items-center justify-end gap-1">
-            <DollarSign
-              className={`w-4 h-4 ${
-                transaction.type === "income"
-                  ? "text-green-500"
-                  : "text-red-500"
-              }`}
-            />
+
             <span
               className={`text-sm font-medium ${
                 transaction.type === "income"
@@ -156,7 +152,7 @@ function formatDate(date: Date): string {
                   : "text-red-600"
               }`}
             >
-              {Math.abs(info.getValue()).toFixed(2)}
+              {formatAmount(info.getValue())}
             </span>
           </div>
         );
@@ -288,13 +284,7 @@ function formatDate(date: Date): string {
                   {transaction.paymentMethod}
                 </span>
                 <div className="flex items-center gap-1">
-                  <DollarSign
-                    className={`w-4 h-4 ${
-                      transaction.type === "income"
-                        ? "text-green-500"
-                        : "text-red-500"
-                    }`}
-                  />
+                 
                   <span
                     className={`text-sm font-medium ${
                       transaction.type === "income"
@@ -302,7 +292,7 @@ function formatDate(date: Date): string {
                         : "text-red-600"
                     }`}
                   >
-                    {Math.abs(transaction.amount).toFixed(2)}
+                    {formatAmount(transaction.amount)}
                   </span>
                 </div>
               </div>

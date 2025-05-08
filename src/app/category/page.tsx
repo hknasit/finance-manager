@@ -288,7 +288,7 @@ export default function CategoriesPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between px-4 py-3">
-            <h1 className="text-xl font-semibold">Categories</h1>
+            <h1 className="text-xl font-semibold text-gray-900" >Categories</h1>
             <div className="flex items-center gap-4">
               {/* <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                 <Filter className="w-5 h-5" />
@@ -300,7 +300,7 @@ export default function CategoriesPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 <Plus className="w-5 h-5" />
-                Add Category
+                 Category
               </button>
             </div>
           </div>

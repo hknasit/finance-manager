@@ -134,52 +134,31 @@ export default function YearOverview() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center gap-8">
-              <h1 className="text-xl font-semibold">Dashboard Overview</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Year Summary</h1>
             </div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-gray-400" />
-                <div>
-                  <span className="text-sm text-gray-500">Cash Balance:</span>
-                  <span className="ml-2 text-gray-900">
-                    ₹{balances.cashBalance.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-gray-400" />
-                <div>
-                  <span className="text-sm text-gray-500">Bank Balance:</span>
-                  <span className="ml-2 text-gray-900">
-                    ₹{balances.bankBalance.toFixed(2)}
-                  </span>
-                </div>
+            {/* Year Navigation */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setYear(year - 1)}
+                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <h2 className="text-xl font-semibold text-gray-900">{year}</h2>
+                <button
+                  onClick={() => setYear(year + 1)}
+                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Year Navigation */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setYear(year - 1)}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-semibold">{year}</h2>
-            <button
-              onClick={() => setYear(year + 1)}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
         {/* Months Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {data.map((month) => (

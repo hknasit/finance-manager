@@ -100,7 +100,7 @@ export default function Sidebar() {
           <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
             <DollarSign className="w-5 h-5 text-white" />
           </div>
-          <span className="font-semibold text-lg">CashFlow</span>
+          <span className="font-semibold text-lg text-gray-900">CashFlow</span>
         </div>
 
         {/* Quick Action */}

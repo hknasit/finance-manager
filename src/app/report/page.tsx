@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import { CreditCard, Download, Plus, Wallet } from "lucide-react";
+import { Download } from "lucide-react";
 import { useCategories } from "@/contexts/CategoryContext";
-import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+
 
 const ReportPage = () => {
   const { categories } = useCategories();
@@ -16,7 +16,6 @@ const ReportPage = () => {
     categories: [],
     paymentMethod: "all",
   });
-  const { preferences, formatAmount } = useUserPreferences();
 
   const filteredCategories =
     categories[filters.type === "income" ? "income" : "expense"] || [];
@@ -69,37 +68,13 @@ const ReportPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 m-2">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-8">
-              <h1 className="text-xl font-semibold">Generate Report</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <Wallet className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <span className="text-sm text-gray-500">Cash Balance:</span>
-                    <span className="ml-2 text-gray-900">
-                      {formatAmount(preferences.cashBalance)}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <span className="text-sm text-gray-500">Bank Balance:</span>
-                    <span className="ml-2 text-gray-900">
-                      {formatAmount(preferences.bankBalance)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                <Plus className="w-5 h-5" />
-                Add Transaction
-              </button>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Generate Report
+              </h1>
             </div>
           </div>
         </div>

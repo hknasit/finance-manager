@@ -38,7 +38,7 @@ export default function CurrencyPreferences() {
         disabled={updating || loading}
         className="relative w-full bg-white px-4 py-3 text-left border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition-all hover:bg-gray-50 disabled:bg-gray-50 disabled:cursor-not-allowed"
       >
-        <span className="flex items-center justify-between">
+        <span className="flex items-center justify-between text-gray-900">
           <span className="flex items-center gap-2">
             <span className="text-sm font-medium">
               {currentCurrency?.name} ({currentCurrency?.code})
@@ -60,14 +60,14 @@ export default function CurrencyPreferences() {
               <button
                 key={currency.code}
                 type="button"
-                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between ${
+                className={`w-full text-left px-4 py-2.5 text-sm text-gray-900 hover:bg-gray-50 flex items-center justify-between ${
                   preferences.currency === currency.code ? 'text-green-600 bg-green-50' : 'text-gray-900'
                 }`}
                 onClick={() => handleCurrencyChange(currency.code)}
               >
                 <span className="flex items-center gap-2">
                   <span>{currency.name}</span>
-                  <span className="text-gray-400">({currency.code})</span>
+                  <span className="text-gray-900">({currency.code})</span>
                 </span>
                 {preferences.currency === currency.code && (
                   <Check className="w-4 h-4" />
