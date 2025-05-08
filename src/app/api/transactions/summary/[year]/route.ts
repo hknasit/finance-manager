@@ -57,9 +57,9 @@ export async function GET(request: NextRequest, params: Params) {
     if (!mongoose.connections[0].readyState) {
       await mongoose.connect(process.env.MONGODB_URI!);
     }
-
-    const startDate = new Date(year, 0, 1);
-    const endDate = new Date(year + 1, 0, 1);
+    const demaindYear = Number(year);
+    const startDate = new Date(demaindYear, 0, 1);
+    const endDate = new Date(demaindYear + 1, 0, 1);
     const userId = new mongoose.Types.ObjectId(decoded.id);
 
     // Get user's categories
