@@ -80,7 +80,7 @@ export default function RegisterPage() {
         throw new Error(data.error || "Failed to register");
       }
 
-      router.push("/login?registered=true");
+      router.push("/login?message=User registered successfully. Please check your email to verify your account.");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -109,7 +109,7 @@ export default function RegisterPage() {
             {/* <a href="#features" className="text-gray-900 font-medium hover:text-green-600">Features</a> */}
             <a href={`${baseUrl}/`} className="text-gray-800 hover:text-green-600">Home</a>
             <a href={`${baseUrl}/about`} className="text-gray-800 hover:text-green-600">About</a>
-            <a href={`${baseUrl}/contact`} className="text-gray-600 hover:text-green-600">Login</a>
+            {/* <a href={`${baseUrl}/contact`} className="text-gray-600 hover:text-green-600">Login</a> */}
             <a href={`${baseUrl}/login`} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
               Login
             </a>

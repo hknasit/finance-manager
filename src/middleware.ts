@@ -1,46 +1,64 @@
 import { NextResponse } from "next/server";
 
-const BASE_PATH = '/projects/mymoney';
+const BASE_PATH = "/projects/mymoney";
 const PUBLIC_PATHS = [
-  `/`,              // Allow root path
+  `/`, // Allow root path
   `/login`,
   `/register`,
   `/forgot-password`,
-  `/reset-password`,
-  `/verify-email`,
-  '/about',
-  '/contact'
+  "/about",
+  "/contact",
+];
+
+// Dynamic public routes that contain path parameters
+const DYNAMIC_PUBLIC_PATHS = [
+  "/reset-password/",
+  "/verify-email", // Any path starting with /reset-password/ will be public
 ];
 
 // Helper function to check if a path is public
 const isPublicPath = (pathname) => {
   // First, normalize the path relative to BASE_PATH
-  const relativePath = pathname.startsWith(BASE_PATH) 
-    ? pathname.slice(BASE_PATH.length) 
+  const relativePath = pathname.startsWith(BASE_PATH)
+    ? pathname.slice(BASE_PATH.length)
     : pathname;
-    
-  return PUBLIC_PATHS.some(path => 
-    relativePath === path || relativePath === path + '/'
+
+  if (
+    PUBLIC_PATHS.some(
+      (path) => relativePath === path || relativePath === path + "/"
+    )
+  ) {
+    return true;
+  }
+  // Check for dynamic public paths (paths with parameters)
+  return DYNAMIC_PUBLIC_PATHS.some((dynamicPath) =>
+    relativePath.startsWith(dynamicPath)
   );
 };
 const isSafeReturnUrl = (url) => {
-  return url.startsWith('/') && 
-         !url.includes('//') && 
-         !url.startsWith('/api/') &&
-         !url.startsWith('/_next/');
+  return (
+    url.startsWith("/") &&
+    !url.includes("//") &&
+    !url.startsWith("/api/") &&
+    !url.startsWith("/_next/")
+  );
 };
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
   // Remove trailing slash for consistent comparison
-  const normalizedPath = pathname === "/"? pathname: pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+  const normalizedPath =
+    pathname === "/"
+      ? pathname
+      : pathname.endsWith("/")
+      ? pathname.slice(0, -1)
+      : pathname;
 
-  
   // Skip middleware for static files and API routes
   if (
-    pathname.startsWith('/_next') || 
-    pathname.startsWith('/api/') ||
-    pathname.includes('.')
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/") ||
+    pathname.includes(".")
   ) {
     return NextResponse.next();
   }
@@ -51,21 +69,26 @@ export function middleware(request) {
   // Check if it's a public path (including the landing page)
   if (isPublicPath(normalizedPath)) {
     // If user is logged in and tries to access login/register pages, redirect to dashboard
-    if (isValidToken && 
-        (normalizedPath.includes('/login') || normalizedPath.includes('/register'))) {
-      return NextResponse.redirect(new URL(`${BASE_PATH}/dashboard`, request.url));
+    if (
+      isValidToken &&
+      (normalizedPath.includes("/login") ||
+        normalizedPath.includes("/register"))
+    ) {
+      return NextResponse.redirect(
+        new URL(`${BASE_PATH}/dashboard`, request.url)
+      );
     }
     return NextResponse.next();
   }
 
   // For protected routes, check authentication
   if (!isValidToken) {
-    const returnUrl = normalizedPath.startsWith(BASE_PATH) 
+    const returnUrl = normalizedPath.startsWith(BASE_PATH)
       ? normalizedPath.slice(BASE_PATH.length)
       : normalizedPath;
-      
+
     const loginUrl = new URL(`${BASE_PATH}/login`, request.url);
-    
+
     if (isSafeReturnUrl(returnUrl)) {
       loginUrl.searchParams.set("from", returnUrl);
     }
@@ -73,15 +96,15 @@ export function middleware(request) {
   }
 
   const response = NextResponse.next();
-  
+
   // Security headers
   const headers = {
-    'X-Frame-Options': 'DENY',
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-    'X-XSS-Protection': '1; mode=block',
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "X-XSS-Protection": "1; mode=block",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
   };
 
   Object.entries(headers).forEach(([key, value]) => {
@@ -94,9 +117,9 @@ export function middleware(request) {
 // Update matcher to be more specific and exclude static files and API routes
 export const config = {
   matcher: [
-     // Match all paths under /projects/mymoney except static files and API routes
-    '/projects/mymoney/((?!api|_next|_static|.*\\..*).*)',
-    '/((?!api|_next|_static|.*\\..*).*)',
-    '/'
+    // Match all paths under /projects/mymoney except static files and API routes
+    "/projects/mymoney/((?!api|_next|_static|.*\\..*).*)",
+    "/((?!api|_next|_static|.*\\..*).*)",
+    "/",
   ],
 };

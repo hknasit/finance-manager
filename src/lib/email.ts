@@ -29,7 +29,7 @@ export async function sendResetEmail(email: string, token: string) {
 
 
 export async function sendVerificationEmail(email: string, token: string) {
-  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_BASE_PATH}/verify-email?token=${token}`;
+  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}${process.env.NEXT_PUBLIC_BASE_PATH}/verify-email/${token}`;
   
   const mailOptions = {
     from: process.env.EMAIL_FROM,

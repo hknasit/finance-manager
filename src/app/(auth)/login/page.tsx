@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
   DollarSign,
+  CheckCircle,
 } from "lucide-react";
 
 export default function LoginPage() {
@@ -24,6 +25,30 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(true);
+  const [successMessage, setSuccessMessage] = useState("");
+  useEffect(() => {
+    // Extract message from URL using window.location
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const message = urlParams.get("message");
+
+      if (message) {
+        // Decode the URL parameter
+        const decodedMessage = decodeURIComponent(message);
+        setSuccessMessage(decodedMessage);
+
+        // Optional: Clear the message from URL after a delay
+        const timeoutId = setTimeout(() => {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("message");
+          window.history.replaceState({}, "", url.toString());
+        }, 5000);
+
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, []);
+
   const baseUrl = process.env.NEXT_PUBLIC_BASE_PATH;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,21 +67,39 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-white text-gray-800">
       <nav className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <DollarSign className="w-6 md:w-8 h-6 md:h-8 text-green-600" />
-            <span className="ml-2 text-lg md:text-xl font-bold">CashFlow</span>
-          </div>
-          <div className="hidden md:flex items-center space-x-8">
-            {/* <a href="#features" className="text-gray-900 font-medium hover:text-green-600">Features</a> */}
-            <a href={`${baseUrl}/`} className="text-gray-800 hover:text-green-600">Home</a>
-            <a href={`${baseUrl}/about`} className="text-gray-800 hover:text-green-600">About</a>
-            <a href={`${baseUrl}/contact`} className="text-gray-600 hover:text-green-600">Contact</a>
-            <a href={`${baseUrl}/register`} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-              Get Started
-            </a>
-          </div>
-          {/* Mobile menu button could be added here */}
-        </nav>
+        <div className="flex items-center">
+          <DollarSign className="w-6 md:w-8 h-6 md:h-8 text-green-600" />
+          <span className="ml-2 text-lg md:text-xl font-bold">CashFlow</span>
+        </div>
+        <div className="hidden md:flex items-center space-x-8">
+          {/* <a href="#features" className="text-gray-900 font-medium hover:text-green-600">Features</a> */}
+          <a
+            href={`${baseUrl}/`}
+            className="text-gray-800 hover:text-green-600"
+          >
+            Home
+          </a>
+          <a
+            href={`${baseUrl}/about`}
+            className="text-gray-800 hover:text-green-600"
+          >
+            About
+          </a>
+          <a
+            href={`${baseUrl}/contact`}
+            className="text-gray-600 hover:text-green-600"
+          >
+            Contact
+          </a>
+          <a
+            href={`${baseUrl}/register`}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Get Started
+          </a>
+        </div>
+        {/* Mobile menu button could be added here */}
+      </nav>
       <main className="container mx-auto px-4 py-4 md:py-8">
         <div className="max-w-md mx-auto">
           {/* Login Card */}
@@ -68,7 +111,13 @@ export default function LoginPage() {
               </h1>
               <p className="text-gray-600">Please sign in to your account</p>
             </div>
-
+            {/* Success Message */}
+            {successMessage && (
+              <div className="mx-4 md:mx-5 mt-4 flex items-center gap-2 p-4 bg-green-50 text-green-700 rounded-lg">
+                <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                <p className="text-sm">{successMessage}</p>
+              </div>
+            )}
             {/* Error Message */}
             {error && (
               <div className="mx-6 md:mx-8 mt-6 flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">

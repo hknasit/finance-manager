@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Card,
@@ -12,15 +12,15 @@ import {
   Button,
 } from "@mui/material";
 import { AlertCircle, CheckCircle } from "lucide-react";
-
-export default function VerifyEmailContent() {
+interface ResetPasswordFormProps {
+  token: string;
+}
+export default function VerifyEmailContent({ token }: ResetPasswordFormProps) {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
   const [message, setMessage] = useState("");
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
 
   useEffect(() => {
     if (!token) {
@@ -46,8 +46,8 @@ export default function VerifyEmailContent() {
 
       // Redirect to login after successful verification
       setTimeout(() => {
-        router.push("/login?verified=true");
-      }, 3000);
+        router.push("/login?message=Your account is verified");
+      }, 2000);
     } catch (error: any) {
       setStatus("error");
       setMessage(error.message || "Failed to verify email");

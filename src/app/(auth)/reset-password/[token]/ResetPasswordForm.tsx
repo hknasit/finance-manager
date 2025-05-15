@@ -55,7 +55,7 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
       // Redirect to login page with success message
       router.push(
-        `${process.env.NEXT_PUBLIC_BASE_PATH}/login?message=Password reset successful`
+        `/login?message=Password reset successful`
       );
     } catch (err: any) {
       setError(err.message);
