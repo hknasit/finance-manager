@@ -3,12 +3,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import {
+  Mail,
+  Loader2,
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle,
+  DollarSign,
+} from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_PATH;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,11 +27,14 @@ export default function ForgotPasswordPage() {
     setError("");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH}/api/auth/forgot-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
 
       const data = await res.json();
 
@@ -39,71 +52,136 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen text-gray-800 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email address and we&apos;ll send you a reset link
-          </p>
+    <div className="min-h-screen bg-white text-gray-800">
+      <nav className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <DollarSign className="w-6 md:w-8 h-6 md:h-8 text-green-600" />
+          <a href={`${baseUrl}/`}>
+            <span className="ml-2 text-lg md:text-xl font-bold">CashFlow</span>
+          </a>
         </div>
+        <div className="hidden md:flex items-center space-x-8">
+          <a
+            href={`${baseUrl}/`}
+            className="text-gray-800 hover:text-green-600"
+          >
+            Home
+          </a>
+          <a
+            href={`${baseUrl}/about`}
+            className="text-gray-800 hover:text-green-600"
+          >
+            About
+          </a>
+          <a
+            href={`${baseUrl}/contact`}
+            className="text-gray-600 hover:text-green-600"
+          >
+            Contact
+          </a>
+          <a
+            href={`${baseUrl}/register`}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Get Started
+          </a>
+        </div>
+        {/* Mobile menu button could be added here */}
+      </nav>
 
-        {message && (
-          <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded">
-            <p className="text-sm text-green-700">{message}</p>
-          </div>
-        )}
+      <main className="container mx-auto px-4 py-4 md:py-8">
+        <div className="max-w-md mx-auto">
+          {/* Forgot Password Card */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            {/* Card Header */}
+            <div className="px-6 md:px-8 pt-8 pb-6 text-center bg-gradient-to-br from-green-50 to-blue-50">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                Reset Your Password
+              </h1>
+              <p className="text-gray-600">
+                Enter your email to receive a password reset link
+              </p>
+            </div>
 
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
+            {/* Success Message */}
+            {message && (
+              <div className="mx-6 md:mx-8 mt-6 flex items-center gap-2 p-4 bg-green-50 text-green-700 rounded-lg">
+                <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                <p className="text-sm">{message}</p>
+              </div>
+            )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+            {/* Error Message */}
+            {error && (
+              <div className="mx-6 md:mx-8 mt-6 flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              {isLoading ? "Sending..." : "Send reset link"}
-            </button>
-          </div>
+            {/* Forgot Password Form */}
+            <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Email address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="block w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-600 focus:border-green-600 outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
 
-          <div className="text-sm text-center">
-            <Link
-              href="/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              Back to login
-            </Link>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Reset Link"
+                )}
+              </button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">
+                    Remembered your password?
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                href="/login"
+                className="w-full inline-flex items-center justify-center px-6 py-3 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors font-medium"
+              >
+                <ArrowLeft className="mr-2 w-5 h-5" />
+                Back to login
+              </Link>
+            </form>
           </div>
-        </form>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

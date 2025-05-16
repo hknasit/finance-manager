@@ -22,13 +22,7 @@ export async function POST(request: Request) {
      // Generate verification token
      const verificationToken = crypto.randomBytes(32).toString("hex");
      const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-    // Send verification email
-    try {
-      await sendVerificationEmail(email, verificationToken);
-    } catch (error) {
-      console.error("Error sending verification email:", error);
-      throw new Error("Error sending verification email");
-    }
+  
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -57,6 +51,13 @@ export async function POST(request: Request) {
       email: user.email,
       isVerified: user.isVerified,
     };
+      // Send verification email
+    try {
+      await sendVerificationEmail(email, verificationToken);
+    } catch (error) {
+      console.error("Error sending verification email:", error);
+      throw new Error("Error sending verification email");
+    }
 
     return NextResponse.json(
       {

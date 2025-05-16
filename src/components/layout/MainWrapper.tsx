@@ -3,8 +3,8 @@ import { usePathname } from "next/navigation";
 
 const MainWrapper = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-  const noMainContentStylesPaths = ["/", "/about/", "/contact/", "/login/", "/register/"];
-  const isDashboardLayout = !noMainContentStylesPaths.includes(pathname);
+  const noMainContentStylesPaths = ["/", "/about/", "/contact/", "/login/", "/register/", "/forgot-password/", "/reset-password/", "/verify-email/"];
+  const isDashboardLayout = !noMainContentStylesPaths.some(prefix => pathname.startsWith(prefix));
 
   if (!isDashboardLayout) {
     // For special pages like landing, login, etc. that don't use the dashboard layout

@@ -3,22 +3,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  CircularProgress,
-  Button,
-} from "@mui/material";
-import { AlertCircle, CheckCircle } from "lucide-react";
-interface ResetPasswordFormProps {
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+
+interface VerifyEmailContentProps {
   token: string;
 }
-export default function VerifyEmailContent({ token }: ResetPasswordFormProps) {
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
-  );
+
+export default function VerifyEmailContent({ token }: VerifyEmailContentProps) {
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const router = useRouter();
 
@@ -55,47 +47,35 @@ export default function VerifyEmailContent({ token }: ResetPasswordFormProps) {
   };
 
   return (
-    <Card sx={{ width: "100%", maxWidth: 480, boxShadow: 1 }}>
-      <CardContent sx={{ p: 4, textAlign: "center" }}>
-        {status === "loading" && (
-            <Box>
-              <CircularProgress sx={{ mb: 2 }} />
-              <Typography>Verifying your email...</Typography>
-            </Box>
-          )}
+    <div className="w-full flex flex-col items-center justify-center text-center">
+      {status === "loading" && (
+        <div className="flex flex-col items-center justify-center py-6">
+          <Loader2 className="w-12 h-12 text-green-600 animate-spin mb-4" />
+          <p className="text-gray-700 font-medium">Verifying your email...</p>
+        </div>
+      )}
 
-          {status === "error" && (
-            <Box>
-              <AlertCircle size={48} color="red" style={{ marginBottom: 16 }} />
-              <Typography variant="h5" color="error" gutterBottom>
-                Verification Failed
-              </Typography>
-              <Typography color="error.main" sx={{ mb: 3 }}>
-                {JSON.stringify(message)}
-              </Typography>
-              <Button variant="contained" onClick={() => router.push("/login")}>
-                Return to Login
-              </Button>
-            </Box>
-          )}
+      {status === "error" && (
+        <div className="flex flex-col items-center justify-center py-4">
+          <AlertCircle className="w-12 h-12 text-red-600 mb-4" />
+          <h3 className="text-xl font-bold text-red-600 mb-2">Verification Failed</h3>
+          <p className="text-red-600 mb-6">{message}</p>
+          <button
+            onClick={() => router.push("/login")}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+          >
+            Return to Login
+          </button>
+        </div>
+      )}
 
-          {status === "success" && (
-            <Box>
-              <CheckCircle
-                size={48}
-                color="green"
-                style={{ marginBottom: 16 }}
-              />
-              <Typography variant="h5" color="success.main" gutterBottom>
-                Email Verified Successfully
-              </Typography>
-              <Typography color="text.secondary">
-                Redirecting to login page...
-              </Typography>
-            </Box>
-          )}
-
-      </CardContent>
-    </Card>
+      {status === "success" && (
+        <div className="flex flex-col items-center justify-center py-4">
+          <CheckCircle className="w-12 h-12 text-green-600 mb-4" />
+          <h3 className="text-xl font-bold text-green-600 mb-2">Email Verified Successfully</h3>
+          <p className="text-gray-600">Redirecting to login page...</p>
+        </div>
+      )}
+    </div>
   );
 }
